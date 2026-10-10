@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recorder | Sign Language Snap</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤟</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="index.html"><span aria-hidden="true">🤟</span> Sign Language Snap</a>
+    <div class="topbar-right">
+      <a class="btn btn-quiet" href="index.html">Back to the game</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="play-grid">
+      <div class="cam">
+        <video id="video" playsinline muted></video>
+        <canvas id="overlay"></canvas>
+        <p class="cam-status" id="camStatus" role="status"></p>
+        <p class="hand-state" id="handState">No hand in view</p>
+        <p class="countdown" id="countdown" aria-live="assertive"></p>
+      </div>
+
+      <div class="panel rec-panel">
+        <h1 class="rec-title">Record training data</h1>
+        <label class="field">Your name
+          <input id="signer" autocomplete="off" placeholder="First name">
+        </label>
+        <label class="field">Letter
+          <select id="letter"></select>
+        </label>
+        <label class="toggle"><input type="checkbox" id="setLeft"> I sign with my left hand</label>
+
+        <button class="btn btn-big" id="recordBtn" type="button">Record a take</button>
+        <p class="small-note">Or press the space bar. Each take saves 40 frames over about 3 seconds.</p>
+        <div class="progress" aria-hidden="true"><div id="progressFill"></div></div>
+        <p class="rec-status" id="recStatus" role="status"></p>
+
+        <h2 class="section-title" id="countsTitle">Samples</h2>
+        <ul class="letter-counts" id="counts"></ul>
+        <p class="small-note" id="signers"></p>
+
+        <div class="rec-actions">
+          <button class="btn" id="downloadBtn" type="button">Download CSV</button>
+          <button class="btn btn-quiet" id="importBtn" type="button">Import CSV</button>
+          <input type="file" id="importInput" accept=".csv,text/csv" multiple hidden>
+          <button class="btn btn-quiet danger" id="clearBtn" type="button">Clear all</button>
+        </div>
+
+        <details class="tips">
+          <summary>Tips for good data</summary>
+          <ul>
+            <li>Record two takes per letter: one close to the camera, one farther away and slightly tilted.</li>
+            <li>Keep your whole hand in the frame. Plain backgrounds and good light help.</li>
+            <li>Every teammate should record every letter. More hands means a model that works on strangers' hands too.</li>
+            <li>The game uses samples in this browser right away. For the real model, download the CSV and run train.py.</li>
+          </ul>
+        </details>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="js/recorder.js"></script>
+</body>
+</html>
