@@ -444,7 +444,7 @@ function showWordLetter() {
   img.onload = () => ($("signRef").hidden = false);
   img.onerror = () => ($("signRef").hidden = true);
   img.alt = `Reference photo of the ASL letter ${letter}`;
-  img.src = `assets/signs/${letter}.jpg`;
+  img.src = signPath(letter);
 
   setRing(0);
   setMascot("playMascot", "");
