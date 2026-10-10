@@ -358,7 +358,9 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
 }
 
 .sign-ref { margin: 0; }
-.sign-ref img { max-height: 150px; max-width: 100%; border-radius: 16px; border: 3px solid var(--ink); }
+.sign-ref img, .sign-ref video { display: block; max-height: 150px; max-width: 100%; border-radius: 16px; border: 3px solid var(--ink); }
+.sign-ref video { max-height: 180px; background: #000; }
+.sign-ref [hidden] { display: none; }
 .mirrored { transform: scaleX(-1); }
 .hint { margin: 0; max-width: 34ch; font-size: 1.05rem; }
 .seeing { margin: 0; min-height: 1.5em; font-weight: 700; color: var(--muted); }
@@ -861,3 +863,103 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8;  --sticke
 .big-sticker.is-sticker { background: none; border: none; box-shadow: none; width: 160px; height: 166px; transform: none; animation: none; }
 .big-sticker.is-sticker .sticker-art { width: 100%; height: auto; animation: sticker-pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1); }
 @keyframes sticker-pop { from { transform: scale(0.3) rotate(-25deg); } to { transform: scale(1) rotate(-6deg); } }
+
+/* ---------- volunteer tab ---------- */
+.vol-hero { display: flex; align-items: center; gap: 1.25rem; margin: 1.5rem 0 1.5rem; }
+.vol-mascot { width: 110px; flex: none; }
+.vol-title { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 0.3rem; }
+.vol-hero .sub-lede { margin: 0; }
+
+.vol-steps { list-style: none; counter-reset: step; padding: 0; margin: 0 0 1.25rem; display: grid; gap: 0.9rem; max-width: 44rem; }
+.vol-steps li {
+  counter-increment: step;
+  position: relative;
+  padding: 1rem 1.25rem 1rem 4rem;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 20px;
+}
+.vol-steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 1rem;
+  top: 0.9rem;
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-weight: 700;
+  background: var(--mint);
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+}
+.vol-step-title { font-family: var(--display); font-weight: 600; font-size: 1.15rem; margin: 0.15rem 0 0.35rem; }
+.vol-steps p { margin: 0 0 0.6rem; color: var(--muted); }
+.vol-steps p:last-child { margin-bottom: 0; }
+
+.volunteer-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.7rem; }
+.volunteer-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 1rem;
+  color: var(--ink);
+  text-decoration: none;
+  line-height: 1.3;
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.volunteer-card:hover { background: var(--sun); }
+.volunteer-card b { font-family: var(--display); font-weight: 600; font-size: 1.1rem; }
+.volunteer-card span { font-size: 0.9rem; color: var(--muted); }
+
+@media (max-width: 600px) {
+  .vol-mascot { width: 80px; }
+}
+
+/* ---------- Golden afternoon garden background (index.html, signs.html) ----------
+   The painting (assets/garden.svg) stays put behind the page; the top bar and the page
+   itself sit on solid white cards so everything stays easy to read. */
+body.garden-bg { background: none; }
+body.garden-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: #7FC3FF url("../assets/garden.svg") center bottom / cover no-repeat;
+}
+.garden-bg .topbar {
+  width: calc(100% - 2rem);
+  margin-top: 1rem;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.6rem 1rem 0.6rem 1.4rem;
+  box-shadow: 0 6px 0 rgba(30, 80, 60, 0.25);
+}
+.garden-bg main {
+  flex: 0 1 auto;
+  width: calc(100% - 2rem);
+  margin: 1rem auto 1.5rem;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 32px;
+  padding: 1rem 2rem 2rem;
+  box-shadow: 0 10px 0 rgba(30, 80, 60, 0.25);
+}
+.garden-bg .foot {
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  margin: auto auto 1.5rem;
+  padding: 0.4rem 1.2rem;
+  background: var(--white);
+  border-radius: 999px;
+}
+.garden-bg .foot a { color: var(--ink); }
+@media (max-width: 600px) {
+  .garden-bg .topbar { flex-wrap: wrap; justify-content: center; gap: 0.5rem; border-radius: 24px; padding: 0.6rem 0.75rem; }
+  .garden-bg .topbar-right { justify-content: center; gap: 0.5rem; }
+  .garden-bg main { padding: 0.5rem 1rem 1.5rem; border-radius: 24px; }
+}
