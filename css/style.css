@@ -65,8 +65,22 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
   justify-content: space-between;
   gap: 1rem;
 }
-.brand { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
-.brand-mark { width: 2.2em; height: auto; display: block; }
+/* Logo: confetti Mochi + name. Mochi's body follows the chosen flavor. */
+.brand { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-decoration: none; color: var(--ink); display: inline-flex; align-items: center; gap: 0.45rem; }
+.brand-mark { width: 3.1em; height: auto; display: block; overflow: visible; }
+.brand-body { fill: var(--mochi, var(--mint)); stroke: var(--ink); stroke-width: 6; transition: fill 250ms ease; }
+.brand-mochi { transform-box: fill-box; transform-origin: 50% 100%; }
+.brand-confetti { transform-box: fill-box; transform-origin: 50% 50%; transition: transform 300ms ease; }
+.brand:hover .brand-mochi, .brand:focus-visible .brand-mochi { animation: brand-squish 600ms ease; }
+.brand:hover .brand-confetti, .brand:focus-visible .brand-confetti { transform: scale(1.08) rotate(-4deg); }
+@keyframes brand-squish {
+  0%, 100% { transform: scale(1, 1); }
+  35% { transform: scale(1.06, 0.92); }
+  65% { transform: translateY(-6px) scale(0.97, 1.04); }
+}
+.brand-text { display: flex; flex-direction: column; line-height: 1; }
+.brand-name { font-size: 1em; }
+.brand-tag { font-size: 0.42em; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C92F78; margin-top: 0.3em; padding-left: 0.1em; }
 .topbar-right { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.75rem; }
 .streak {
   font-family: var(--display);
