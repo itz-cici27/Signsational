@@ -805,3 +805,115 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8;  --sticke
 .big-sticker.is-sticker { background: none; border: none; box-shadow: none; width: 160px; height: 166px; transform: none; animation: none; }
 .big-sticker.is-sticker .sticker-art { width: 100%; height: auto; animation: sticker-pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1); }
 @keyframes sticker-pop { from { transform: scale(0.3) rotate(-25deg); } to { transform: scale(1) rotate(-6deg); } }
+
+/* ---------- volunteer tab ---------- */
+.volunteer-steps { display: grid; gap: 1.25rem; padding-left: 1.4rem; margin: 0 0 1.25rem; }
+.volunteer-steps li::marker { font-family: var(--display); font-weight: 700; }
+.volunteer-steps p { margin: 0 0 0.6rem; }
+.volunteer-steps .section-subtitle { margin-top: 0; }
+.volunteer-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.8rem; max-width: 44rem; }
+.volunteer-card {
+  width: auto;
+  min-height: 0;
+  padding: 0.6rem 1.1rem;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 0.75rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* ---------- Golden afternoon garden background (index.html, signs.html) ----------
+   The painting (assets/garden.svg) stays put behind the page; the top bar and the page
+   itself sit on solid white cards so everything stays easy to read. */
+body.garden-bg { background: none; }
+body.garden-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: #7FC3FF url("../assets/garden.svg") center bottom / cover no-repeat;
+}
+.garden-bg .topbar {
+  width: calc(100% - 2rem);
+  margin-top: 1rem;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.6rem 1rem 0.6rem 1.4rem;
+  box-shadow: 0 6px 0 rgba(30, 80, 60, 0.25);
+}
+.garden-bg main {
+  flex: 0 1 auto;
+  width: calc(100% - 2rem);
+  margin: 1rem auto 1.5rem;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 32px;
+  padding: 1rem 2rem 2rem;
+  box-shadow: 0 10px 0 rgba(30, 80, 60, 0.25);
+}
+.garden-bg .foot {
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  margin: auto auto 1.5rem;
+  padding: 0.4rem 1.2rem;
+  background: var(--white);
+  border-radius: 999px;
+}
+.garden-bg .foot a { color: var(--ink); }
+@media (max-width: 600px) {
+  .garden-bg .topbar { flex-wrap: wrap; justify-content: center; gap: 0.5rem; border-radius: 24px; padding: 0.6rem 0.75rem; }
+  .garden-bg .topbar-right { justify-content: center; gap: 0.5rem; }
+  .garden-bg main { padding: 0.5rem 1rem 1.5rem; border-radius: 24px; }
+}
+
+/* Practice Stats & Badges */
+.needs-practice-tag {
+  display: block;
+  font-size: 0.65rem;
+  background: #ff5252;
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+  font-weight: bold;
+}
+
+.letter-card.needs-practice {
+  border: 2px solid #ff5252;
+}
+
+/* ---------- review practice stacks ---------- */
+.review-stacks { margin: 0 0 2rem; }
+.review-stacks-note { margin: 0.25rem 0 1.25rem; color: var(--muted); max-width: 60ch; }
+.review-stack-list { list-style: none; padding: 0 1rem 1rem 0; margin: 0; display: flex; flex-wrap: wrap; gap: 2rem; }
+.review-stack {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 200px;
+  padding: 0.9rem 1.1rem;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 20px;
+  cursor: pointer;
+  /* two more "cards" peeking out underneath, so it reads as a stack */
+  box-shadow:
+    7px 7px 0 -1px var(--white), 7px 7px 0 2px var(--ink),
+    14px 14px 0 -1px var(--white), 14px 14px 0 2px var(--ink);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.review-stack:active {
+  transform: translate(4px, 4px);
+  box-shadow:
+    3px 3px 0 -1px var(--white), 3px 3px 0 2px var(--ink),
+    6px 6px 0 -1px var(--white), 6px 6px 0 2px var(--ink);
+}
+.stack-rank { font-weight: 700; font-size: 0.85rem; color: var(--muted); }
+.review-stack.is-slowest .stack-rank { color: var(--danger); }
+.stack-letters { display: flex; flex-wrap: wrap; gap: 0.15rem 0.5rem; font-family: var(--display); font-weight: 700; font-size: 1.7rem; line-height: 1.2; }
+.stack-meta { font-size: 0.9rem; color: var(--muted); }
