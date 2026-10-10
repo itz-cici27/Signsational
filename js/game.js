@@ -131,6 +131,7 @@ function currentTarget() {
 
 function signPath(letter) {
   return `assets/signs/${settings.leftHanded ? "right" : "left"}/${letter}.jpg`;
+}/${letter}.jpg`;
 }
 
 // J and Z are traced in the air, so they get a looping video (ASL Signbank, via SignASL.org)
@@ -298,14 +299,19 @@ function updateAuthUI(user) {
 
 // ---------- home tab ----------
 function renderHome() {
-  // Achievement stickers (see js/stickers.js), in the player's Mochi flavor.
-  const stats = stickerStats(progress);
-  const earnedCount = STICKERS.filter((st) => hasSticker(st, stats)).length;
-  $("stickerBook").innerHTML = STICKERS.map((st) => hasSticker(st, stats)
-    ? `<li class="sticker earned">${stickerSVG(st)}<span class="cap">${st.label}</span></li>`
-    : `<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">${lockedCaption(st, stats)}</span></li>`
-  ).join("");
-  $("stickerBook").setAttribute("aria-label", `${earnedCount} of ${STICKERS.length} stickers collected.`);
+  const stats = progress.stats || {};
+
+  $("stickerBook").innerHTML = ALL_LETTERS.filter(letterDone).length > 0
+    ? ALL_LETTERS.filter(letterDone).map(l => {
+        const needsPractice = (stats[l]?.score || 0) > 8 || (stats[l]?.skips || 0) > 0;
+        const badge = needsPractice ? `<span class="needs-practice-tag">Needs Practice</span>` : "";
+        return `<li class="sticker earned">
+                  <span class="disc" aria-hidden="true">${l}</span>
+                  <span class="cap">${l}</span>
+                  ${badge}
+                </li>`;
+      }).join("")
+    : '<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">Complete letters to collect!</span></li>';
 
   const note = $("modelNote");
   if (!modelLoaded) note.textContent = "Loading the letter model\u2026";
@@ -407,18 +413,26 @@ function startSingleWord(word) {
 function renderReview() {
   const completed = progress.lettersCompleted || [];
   const reviewGrid = $("reviewLetters");
+  const stats = progress.stats || {};
+
   if (completed.length === 0) {
     reviewGrid.innerHTML = '<p class="empty-state">No letters completed yet. Head to the Letters tab to start!</p>';
   } else {
     reviewGrid.innerHTML = "";
-    completed.sort().forEach(letter => {
+    completed.sort((a, b) => (stats[b]?.score || 0) - (stats[a]?.score || 0));
+
+    completed.forEach(letter => {
+      const s = stats[letter] || { avgTime: 0, skips: 0, score: 0 };
+      const avgSec = s.avgTime ? `${s.avgTime.toFixed(1)}s avg` : "New";
+      const needsPractice = s.score > 8 || s.skips > 0;
+
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "letter-card is-done";
+      btn.className = "letter-card is-done" + (needsPractice ? " needs-practice" : "");
       btn.innerHTML = `
         <span class="letter-card-letter">${letter}</span>
-        <span class="letter-card-status">Review</span>
-        <span class="letter-card-coins">${COIN} ${LETTER_COINS_REPLAY}</span>`;
+        <span class="letter-card-status">${avgSec} ${s.skips ? `(${s.skips} skips)` : ""}</span>
+        <span class="letter-card-coins">${needsPractice ? "⚠️ Needs Practice" : `${COIN}${LETTER_COINS_REPLAY}`}</span>`;
       btn.addEventListener("click", () => { returnTab = "review"; startSingleLetter(letter); });
       reviewGrid.append(btn);
     });
@@ -429,17 +443,20 @@ function renderReview() {
   if (wordsDone.length === 0) {
     reviewWordsList.innerHTML = '<li class="empty-state">No word sets completed yet.</li>';
   } else {
-    reviewWordGrid.innerHTML = "";
-    completedWords.forEach(word => {
+    reviewWordsList.innerHTML = "";
+    WORD_SETS.filter(ws => wordsDone.includes(ws.id)).forEach(ws => {
+      const coins = Math.round(ws.reward / 3);
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "word-card is-done";
+      btn.className = "level word-level is-done";
       btn.innerHTML = `
-        <span class="word-card-word">${word}</span>
-        <span class="word-card-status">Review</span>
-        <span class="word-card-coins">${COIN} ${WORD_COINS_REPLAY}</span>`;
-      btn.addEventListener("click", () => { returnTab = "review"; startSingleWord(word); });
-      reviewWordGrid.append(btn);
+        <span class="level-num wl-reward">${COIN}${coins}</span>
+        <span class="level-letters wl-words">${ws.words.join("  ")}</span>
+        <span class="level-status">Review</span>`;
+      btn.addEventListener("click", () => { returnTab = "review"; startWordSet(ws); });
+      const li = document.createElement("li");
+      li.append(btn);
+      reviewWordsList.append(li);
     });
   }
 }
@@ -899,6 +916,7 @@ function updateProgress(filled, close, almost) {
 }
 
 function success() {
+  recordLetterStat(currentTarget(), false);
   play.busy = true;
   setRing(1);
   $("target").classList.add("is-hit");
@@ -921,6 +939,7 @@ function advance() {
 }
 
 function skipLetter() {
+  recordLetterStat(currentTarget(), true);
   if (play.busy) return;
   if (play.mode === "word") {
     const word = play.queue[play.idx];
@@ -1072,3 +1091,27 @@ $("celebrate").addEventListener("close", () => {
   modelLoaded = true;
   renderTab(activeTab);
 })();
+
+
+// ---------- smart review & practice stats ----------
+function recordLetterStat(letter, skipped = false) {
+  if (!letter) return;
+  if (!progress.stats) progress.stats = {};
+  if (!progress.stats[letter]) {
+    progress.stats[letter] = { attempts: 0, totalTime: 0, avgTime: 0, skips: 0, score: 0 };
+  }
+
+  const s = progress.stats[letter];
+  s.attempts += 1;
+
+  if (skipped) {
+    s.skips += 1;
+  } else {
+    const elapsed = Math.max(0.5, (performance.now() - play.letterStart) / 1000);
+    s.totalTime += elapsed;
+    s.avgTime = s.totalTime / Math.max(1, s.attempts - s.skips);
+  }
+
+  s.score = (s.avgTime || 5) + (s.skips * 8);
+  persistProgress();
+}
