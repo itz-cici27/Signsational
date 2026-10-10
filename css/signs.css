@@ -1,0 +1,12 @@
+/* Extra styles for whole-word signs: signs.html, words-recorder.html, and the
+   Sign Words cards on the home page. Builds on style.css. */
+
+.target-emoji { font-size: 5.5rem; }
+.sign-name { font-size: 2.2rem; letter-spacing: 0.06em; }
+.sign-video { font-size: 0.95rem; color: var(--muted); }
+
+.sign-card .level-num { font-size: 2rem; }
+.sign-card .level-letters { font-size: 1rem; letter-spacing: 0.06em; }
+
+.word-counts { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+.word-counts b { font-size: 0.9rem; }

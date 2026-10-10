@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/signs.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -45,6 +46,11 @@
       <h2 class="section-title">Word Challenges</h2>
       <p class="sub-lede">Spell out words letter by letter to earn coins!</p>
       <ol class="levels" id="wordLevels"></ol>
+
+      <h2 class="section-title" id="signWordsTitle">Sign Words</h2>
+      <p class="sub-lede">Learn whole ASL words with movement, like HELLO and THANK YOU.</p>
+      <ol class="levels" id="signWords"></ol>
+      <p class="sub-lede" id="signNote" role="status"></p>
 
       <h2 class="section-title">Sticker book</h2>
       <ul class="stickers" id="stickerBook"></ul>
@@ -122,8 +128,9 @@
     </div>
   </dialog>
 
-  <footer class="foot"><a href="recorder.html">Team tools: record training data</a></footer>
+  <footer class="foot"><a href="recorder.html">Team tools: record training data</a> · <a href="words-recorder.html">record word signs</a></footer>
 
   <script type="module" src="js/game.js"></script>
+  <script type="module" src="js/sign-words-home.js"></script>
 </body>
 </html>
