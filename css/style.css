@@ -805,3 +805,21 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8;  --sticke
 .big-sticker.is-sticker { background: none; border: none; box-shadow: none; width: 160px; height: 166px; transform: none; animation: none; }
 .big-sticker.is-sticker .sticker-art { width: 100%; height: auto; animation: sticker-pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1); }
 @keyframes sticker-pop { from { transform: scale(0.3) rotate(-25deg); } to { transform: scale(1) rotate(-6deg); } }
+
+/* ---------- volunteer tab ---------- */
+.volunteer-steps { display: grid; gap: 1.25rem; padding-left: 1.4rem; margin: 0 0 1.25rem; }
+.volunteer-steps li::marker { font-family: var(--display); font-weight: 700; }
+.volunteer-steps p { margin: 0 0 0.6rem; }
+.volunteer-steps .section-subtitle { margin-top: 0; }
+.volunteer-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.8rem; max-width: 44rem; }
+.volunteer-card {
+  width: auto;
+  min-height: 0;
+  padding: 0.6rem 1.1rem;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 0.75rem;
+  color: var(--ink);
+  text-decoration: none;
+}

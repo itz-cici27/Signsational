@@ -962,7 +962,8 @@ $("celebrate").addEventListener("close", () => {
 
 (async function init() {
   applySettings();
-  switchTab("home");
+  const startTab = location.hash.slice(1);
+  switchTab(document.getElementById(`tab-${startTab}`) ? startTab : "home");
 
   onAuthChange(async (user) => {
     updateAuthUI(user);
