@@ -95,16 +95,16 @@ Pair up whenever someone is blocked.
 | **ML engineers: Cici Zhu & Rhea Lulla** | Data collection, `train.py`, accuracy numbers, confusion matrix | `model.json` covers all 24 letters with a held-out accuracy number you can quote |
 | **Game engineer: Emily Bae** | `game.js`, `hands.js`, tuning strictness, testing on every laptop | A stranger can finish Level 1 without help |
 | **UI/UX Designer: Saanvi Prasad** | Mochi, stickers, reference photos, accessibility polish, `style.css` | Every screen looks finished and passes the accessibility checklist below |
-| **Together: pitch and deploy** | GitHub repo, deployment, submission, pitch deck and script, backup demo video | Site is live, submitted early, and the pitch is rehearsed |
+| **Everyone: pitch and deploy** | GitHub repo, deployment, submission, pitch deck and script, backup demo video | Site is live, submitted early, and the pitch is rehearsed |
 
 ## Timeline
 
 ### Friday night (after dinner, about 7 to 10 PM)
 - **Everyone (30 min):** Clone the repo, run it locally, and record two takes of every letter in the recorder. Send your CSV to P1.
-- **P1:** Run `train.py` on the first batch and commit `model.json`. Write down the first accuracy number.
-- **P2:** Check that tracking works on all four laptops. Play Level 1 with the first model and note which letters feel too hard or too easy.
-- **P3:** Take reference photos of all 24 letters (one hand, plain background) and save them as `assets/signs/A.jpg` and so on.
-- **P4:** Create the GitHub repo, deploy to GitHub Pages, and share the link in your team chat. Start the submission draft.
+- **ML engineers:** Run `train.py` on the first batch and commit `model.json`. Write down the first accuracy number.
+- **Game engineer:** Check that tracking works on all four laptops. Play Level 1 with the first model and note which letters feel too hard or too easy.
+- **UI/UX Designer:** Take reference photos of all 24 letters (one hand, plain background) and save them as `assets/signs/A.jpg` and so on.
+- **Everyone:** Create the GitHub repo, deploy to GitHub Pages, and share the link in your team chat. Start the submission draft.
 - **Sleep.** Seriously.
 
 ### Saturday
@@ -141,11 +141,11 @@ Pair up whenever someone is blocked.
 - [ ] Error messages explain what to do (try denying camera access to check)
 
 ## Pitch outline (2 to 3 minutes, about 30 seconds each)
-1. **P4: The problem.** Hearing families of deaf kids, cost of classes, no feedback in free apps.
-2. **P2: Live demo.** Sign 3 letters, Mochi cheers, finish a level, the sticker slaps in.
-3. **P1: How it works.** Landmarks, our trained network, held-out accuracy, confusion matrix.
-4. **P3: Inclusive design.** Left-hand mode, no sound needed, runs on cheap hardware, private.
-5. **P4: What's next.** Motion signs, and building the curriculum with Deaf educators.
+1. **The problem.** Hearing families of deaf kids, cost of classes, no feedback in free apps.
+2. **Live demo.** Sign 3 letters, Mochi cheers, finish a level, the sticker slaps in.
+3. **How it works.** Landmarks, our trained network, held-out accuracy, confusion matrix.
+4. **Inclusive design.** Left-hand mode, no sound needed, runs on cheap hardware, private.
+5. **What's next.** Motion signs, and building the curriculum with Deaf educators.
 
 ## Honest limitations (say these in the pitch, judges respect it)
 - MVP covers static fingerspelling only. Real ASL also uses movement and facial expressions.
