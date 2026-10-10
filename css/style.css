@@ -739,3 +739,20 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8; }
   .flavor-options .flavor { padding: 0.45rem 0.35rem; }
   .flavor-options .flavor-name { font-size: 0.66rem; }
 }
+
+/* ---------- custom word ---------- */
+.custom-word { display: grid; gap: 0.4rem; margin: 0 0 1.25rem; }
+.custom-word-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.custom-word-row input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  padding: 0.55rem 0.8rem;
+}
+.custom-word-note-error { color: var(--danger); }
