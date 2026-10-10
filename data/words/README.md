@@ -7,6 +7,12 @@ Training data for the whole-word signs (`train_words.py` → `model/words.json`)
   `tools/import_laplaces_words.py` from `sign_language.csv` in
   [laplaces42/sign-language-interpreter](https://github.com/laplaces42/sign-language-interpreter).
   All of it comes from one signer, so record your own clips too.
+- `wlasl.csv`: YES, NO, and EAT, made by `tools/import_wlasl_words.py` from
+  [WLASL](https://dxli94.github.io/WLASL/) videos (many signers, one video each).
+  Only hand landmarks are kept, never the video. WLASL is licensed under the
+  Computational Use of Data Agreement (C-UDA): academic and computational use only,
+  no commercial use. Cite Li et al., "Word-level Deep Sign Language Recognition from
+  Video: A New Large-scale Dataset and Methods Comparison", WACV 2020.
 
 Each row is one 0.8-second clip: `person`, `label`, then `w0`–`w659` (15 frames × 44 numbers; see `js/signs.js`).
 

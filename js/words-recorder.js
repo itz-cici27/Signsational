@@ -2,10 +2,11 @@
 import { createHandTracker, startCamera, runLoop, drawHand } from "./hands.js";
 import { SIGN_WORDS, NONE, SIGN_FRAMES, PER_FRAME, frameInfo, sliceTake, loadWordSamples, saveWordSamples } from "./signs.js";
 import { loadSettings, saveSettings, getItem, setItem, dayKey } from "./store.js";
+import { MOTION_LETTERS, HINTS } from "./letters.js";
 
 const TAKE_MS = 4000;
 const TARGET_PER_WORD = 40; // clips per signer: about four takes
-const LABELS = [...SIGN_WORDS.map((s) => s.word), NONE];
+const LABELS = [...SIGN_WORDS.map((s) => s.word), ...MOTION_LETTERS, NONE];
 const N_FEATURES = SIGN_FRAMES * PER_FRAME;
 
 const $ = (id) => document.getElementById(id);
@@ -18,7 +19,8 @@ let countingDown = false;
 let aspect = 4 / 3;
 
 // ---------- UI setup ----------
-LABELS.forEach((w) => $("word").add(new Option(w === NONE ? "NONE (not a sign)" : w, w)));
+const optionName = (w) => (w === NONE ? "NONE (not a sign)" : MOTION_LETTERS.includes(w) ? `Letter ${w}` : w);
+LABELS.forEach((w) => $("word").add(new Option(optionName(w), w)));
 $("signer").value = getItem("sls_signer", "");
 $("setLeft").checked = settings.leftHanded;
 
@@ -47,7 +49,9 @@ function renderCounts() {
   const mine = countFor(person);
   const current = $("word").value;
   const sign = SIGN_WORDS.find((s) => s.word === current);
-  $("wordHint").textContent = sign ? sign.hint : "Wave, fidget, scratch your head, or hold up random letters. Anything that isn't one of the words.";
+  $("wordHint").textContent = sign ? sign.hint
+    : MOTION_LETTERS.includes(current) ? HINTS[current]
+    : "Wave, fidget, scratch your head, or hold up random letters. Include a still I and a still pointing finger, so the model learns J and Z need the motion.";
   $("countsTitle").textContent = person ? `${person}'s clips` : "Clips";
   $("counts").innerHTML = LABELS.map((w) => {
     const n = mine[w] || 0;

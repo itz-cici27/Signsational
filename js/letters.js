@@ -1,12 +1,16 @@
-// Static fingerspelling letters. J and Z need motion, so they're left out of the MVP.
+// Static fingerspelling letters, recognised from a single frame (recorder.html, train.py).
 export const LETTERS = "ABCDEFGHIKLMNOPQRSTUVWXY".split("");
+
+// J and Z are traced in the air, so they use the clip model from signs.js instead
+// (record them in words-recorder.html, then run train_words.py).
+export const MOTION_LETTERS = ["J", "Z"];
 
 export const LEVELS = [
   { id: 1, letters: ["A", "B", "C", "D", "E"], sticker: "🌸", stickerName: "Blossom" },
-  { id: 2, letters: ["F", "G", "H", "I", "K"], sticker: "🐝", stickerName: "Busy Bee" },
+  { id: 2, letters: ["F", "G", "H", "I", "J", "K"], sticker: "🐝", stickerName: "Busy Bee" },
   { id: 3, letters: ["L", "M", "N", "O", "P"], sticker: "🌈", stickerName: "Rainbow" },
   { id: 4, letters: ["Q", "R", "S", "T", "U"], sticker: "🦋", stickerName: "Butterfly" },
-  { id: 5, letters: ["V", "W", "X", "Y"], sticker: "⭐", stickerName: "Gold Star" },
+  { id: 5, letters: ["V", "W", "X", "Y", "Z"], sticker: "⭐", stickerName: "Gold Star" },
 ];
 
 export const HINTS = {
@@ -19,6 +23,7 @@ export const HINTS = {
   G: "Point your index finger and thumb sideways, parallel to each other, with the other fingers closed.",
   H: "Point your index and middle fingers sideways together, with your thumb tucked.",
   I: "Raise your pinky. Keep the other fingers in a fist with your thumb across them.",
+  J: "Make an I with your pinky up, then draw a J in the air with your pinky: down, then curve toward you.",
   K: "Raise your index and middle fingers in a V, with your thumb touching the middle of your middle finger.",
   L: "Point your index finger up and your thumb out to make an L.",
   M: "Fold your index, middle, and ring fingers over your tucked thumb.",
@@ -34,9 +39,10 @@ export const HINTS = {
   W: "Hold your index, middle, and ring fingers up and spread apart.",
   X: "Raise your index finger and bend it into a hook. Keep the other fingers closed.",
   Y: "Stretch out your thumb and pinky. Fold the middle three fingers down.",
+  Z: "Point your index finger and draw a Z in the air: across, diagonally down, then across again.",
 };
 
-// Word fingerspelling challenges. All letters must be in LETTERS (no J or Z).
+// Word fingerspelling challenges. Letters must be in LETTERS or MOTION_LETTERS.
 export const WORD_SETS = [
   { id: "w1", name: "First Words", reward: 30, words: ["CAT", "DOG", "SUN", "CUP", "BIG", "RED"] },
   { id: "w2", name: "Animal Friends", reward: 40, words: ["FISH", "BIRD", "FROG", "DUCK", "BEAR"] },
