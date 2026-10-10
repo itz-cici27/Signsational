@@ -11,14 +11,13 @@ function render(classifier) {
   for (const s of SIGN_WORDS) {
     const trained = !!classifier && classifier.labels.includes(s.word);
     const isDone = done.includes(s.word);
-    const status = !classifier ? "Loading…" : !trained ? "Not trained yet" : isDone ? "✅ Learned" : "Ready";
+    const status = !classifier ? "Loading…" : !trained ? "Not trained yet" : isDone ? "Learned" : "Ready";
 
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "level sign-card" + (isDone ? " is-done" : "") + (trained ? "" : " is-locked");
     btn.disabled = !trained;
     btn.innerHTML = `
-      <span class="level-num" aria-hidden="true">${s.emoji}</span>
       <span class="level-letters">${s.word}</span>
       <span class="level-status">${status}</span>
       <span class="level-coins"><img class="coin-icon" src="assets/coin.png" alt="coins" aria-hidden="true"> ${signRewards(isDone)}</span>`;
