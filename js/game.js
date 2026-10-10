@@ -61,6 +61,10 @@ function currentTarget() {
   return play.queue[play.idx];
 }
 
+function signPath(letter) {
+  return `assets/signs/${settings.leftHanded ? "left" : "right"}/${letter}.jpg`;
+}
+
 function setMascot(id, state) {
   const el = $(id);
   el.classList.remove("is-cheer", "is-think");
@@ -101,7 +105,6 @@ function chime() {
 
 function applySettings() {
   document.documentElement.classList.toggle("big-text", settings.bigText);
-  $("signImg").classList.toggle("mirrored", settings.leftHanded);
 }
 
 // ---------- home screen ----------
@@ -329,7 +332,7 @@ function showLetter() {
   img.onload = () => ($("signRef").hidden = false);
   img.onerror = () => ($("signRef").hidden = true);
   img.alt = `Reference photo of the ASL letter ${letter}`;
-  img.src = `assets/signs/${letter}.jpg`;
+  img.src = signPath(letter);
 
   setRing(0);
   setMascot("playMascot", "");
@@ -583,6 +586,8 @@ function updateSettings() {
   };
   saveSettings(settings);
   applySettings();
+  const current = play.queue[play.idx];
+  if (!$("play").hidden && current) $("signImg").src = signPath(current);
   if (!$("home").hidden) renderHome();
 }
 
