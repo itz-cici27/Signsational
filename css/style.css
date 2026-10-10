@@ -757,10 +757,52 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8;  --sticke
 }
 .custom-word-note-error { color: var(--danger); }
 
-/* ---------- sticker book: peekaboo Mochi stickers (js/stickers.js) ---------- */
-.sticker .sticker-art { width: 104px; height: auto; display: block; transform: rotate(-6deg); }
-.sticker.earned:nth-child(even) .sticker-art { transform: rotate(5deg); }
-.sticker .disc { width: 92px; height: 92px; margin: 6px; }
-.big-sticker.is-sticker { background: none; border: none; box-shadow: none; width: 160px; height: 166px; transform: none; animation: none; }
-.big-sticker.is-sticker .sticker-art { width: 100%; height: auto; animation: sticker-pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1); }
-@keyframes sticker-pop { from { transform: scale(0.3) rotate(-25deg); } to { transform: scale(1) rotate(-6deg); } }
+
+/* Practice Stats & Badges */
+.needs-practice-tag {
+  display: block;
+  font-size: 0.65rem;
+  background: #ff5252;
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+  font-weight: bold;
+}
+
+.letter-card.needs-practice {
+  border: 2px solid #ff5252;
+}
+
+/* ---------- review practice stacks ---------- */
+.review-stacks { margin: 0 0 2rem; }
+.review-stacks-note { margin: 0.25rem 0 1.25rem; color: var(--muted); max-width: 60ch; }
+.review-stack-list { list-style: none; padding: 0 1rem 1rem 0; margin: 0; display: flex; flex-wrap: wrap; gap: 2rem; }
+.review-stack {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 200px;
+  padding: 0.9rem 1.1rem;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 20px;
+  cursor: pointer;
+  /* two more "cards" peeking out underneath, so it reads as a stack */
+  box-shadow:
+    7px 7px 0 -1px var(--white), 7px 7px 0 2px var(--ink),
+    14px 14px 0 -1px var(--white), 14px 14px 0 2px var(--ink);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.review-stack:active {
+  transform: translate(4px, 4px);
+  box-shadow:
+    3px 3px 0 -1px var(--white), 3px 3px 0 2px var(--ink),
+    6px 6px 0 -1px var(--white), 6px 6px 0 2px var(--ink);
+}
+.stack-rank { font-weight: 700; font-size: 0.85rem; color: var(--muted); }
+.review-stack.is-slowest .stack-rank { color: var(--danger); }
+.stack-letters { display: flex; flex-wrap: wrap; gap: 0.15rem 0.5rem; font-family: var(--display); font-weight: 700; font-size: 1.7rem; line-height: 1.2; }
+.stack-meta { font-size: 0.9rem; color: var(--muted); }

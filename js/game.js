@@ -1,3 +1,4 @@
+import { mascotSVG, applyFlavor } from "./mascot.js";
 import { createHandTracker, startCamera, stopCamera, runLoop, toFeatures, drawHand } from "./hands.js";
 import { loadClassifier } from "./classifier.js";
 import { LETTERS, HINTS, WORD_SETS, SHOP_ITEMS, MOTION_LETTERS } from "./letters.js";
@@ -6,9 +7,8 @@ import {
   loadSettings, saveSettings, loadProgress, saveProgress, bumpStreak, currentStreak,
   loadShop, saveShop,
 } from "./store.js";
-import { STICKERS, stickerStats, hasSticker, newStickers, lockedCaption, stickerSVG } from "./stickers.js";
-import { mascotSVG, applyFlavor } from "./mascot.js";
 import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud } from "./firebase.js";
+import { stickerStats, newStickers, stickerSVG, STICKERS, hasSticker } from "./stickers.js";
 
 const COIN = `<img class="coin-icon" src="assets/coin.png" alt="coins" aria-hidden="true">`;
 const ALL_LETTERS = [...LETTERS, ...MOTION_LETTERS].sort();
@@ -127,8 +127,9 @@ function currentTarget() {
 }
 
 function signPath(letter) {
-  return `assets/signs/${settings.leftHanded ? "right" : "left"}/${letter}.jpg`;
+  return `assets/signs/${settings.leftHanded ? "right" : "left"}/${letter}.jpg?v=2`;
 }
+
 
 function setMascot(id, state) {
   const el = $(id);
@@ -226,18 +227,39 @@ function persistShop() {
   syncToCloud();
 }
 
+// Keep the practice stats from both devices: for each letter, use the one with more attempts.
+function mergeStats(a, b) {
+  const out = { ...(b || {}) };
+  for (const [letter, s] of Object.entries(a || {})) {
+    if (!out[letter] || (s.attempts || 0) >= (out[letter].attempts || 0)) out[letter] = s;
+  }
+  return out;
+}
+
 function mergeProgress(local, cloud) {
   if (!cloud) return local;
   return {
     completed: [...new Set([...local.completed, ...(cloud.completed || [])])],
     lettersCompleted: [...new Set([...(local.lettersCompleted || []), ...(cloud.lettersCompleted || [])])],
     wordsCompleted: [...new Set([...(local.wordsCompleted || []), ...(cloud.wordsCompleted || [])])],
+    reviewsDone: mergeReviews(local.reviewsDone, cloud.reviewsDone),
     signsCompleted: [...new Set([...(local.signsCompleted || []), ...(cloud.signsCompleted || [])])],
     wordsSigned: Math.max(local.wordsSigned || 0, cloud.wordsSigned || 0),
     coins: Math.max(local.coins || 0, cloud.coins || 0),
+    stats: mergeStats(local.stats, cloud.stats),
     streak: (local.lastDay || "") >= (cloud.lastDay || "") ? local.streak : cloud.streak,
     lastDay: (local.lastDay || "") >= (cloud.lastDay || "") ? local.lastDay : cloud.lastDay,
   };
+}
+
+// Keep finished reviews from both devices (newest first, at most 10).
+function mergeReviews(a, b) {
+  const byId = new Map();
+  for (const r of [...(b || []), ...(a || [])]) {
+    const old = byId.get(r.id);
+    if (!old || (r.at || 0) > (old.at || 0)) byId.set(r.id, r);
+  }
+  return [...byId.values()].sort((x, y) => (y.at || 0) - (x.at || 0)).slice(0, 10);
 }
 
 function mergeShop(local, cloud) {
@@ -264,14 +286,19 @@ function updateAuthUI(user) {
 
 // ---------- home tab ----------
 function renderHome() {
-  // Achievement stickers (see js/stickers.js), in the player's Mochi flavor.
-  const stats = stickerStats(progress);
-  const earnedCount = STICKERS.filter((st) => hasSticker(st, stats)).length;
-  $("stickerBook").innerHTML = STICKERS.map((st) => hasSticker(st, stats)
-    ? `<li class="sticker earned">${stickerSVG(st)}<span class="cap">${st.label}</span></li>`
-    : `<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">${lockedCaption(st, stats)}</span></li>`
-  ).join("");
-  $("stickerBook").setAttribute("aria-label", `${earnedCount} of ${STICKERS.length} stickers collected.`);
+  const stats = progress.stats || {};
+
+  $("stickerBook").innerHTML = ALL_LETTERS.filter(letterDone).length > 0
+    ? ALL_LETTERS.filter(letterDone).map(l => {
+        const needsPractice = (stats[l]?.score || 0) > 8 || (stats[l]?.skips || 0) > 0;
+        const badge = needsPractice ? `<span class="needs-practice-tag">Needs Practice</span>` : "";
+        return `<li class="sticker earned">
+                  <span class="disc" aria-hidden="true">${l}</span>
+                  <span class="cap">${l}</span>
+                  ${badge}
+                </li>`;
+      }).join("")
+    : '<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">Complete letters to collect!</span></li>';
 
   const note = $("modelNote");
   if (!modelLoaded) note.textContent = "Loading the letter model\u2026";
@@ -370,18 +397,26 @@ function startCustomWord(e) {
 function renderReview() {
   const completed = progress.lettersCompleted || [];
   const reviewGrid = $("reviewLetters");
+  const stats = progress.stats || {};
+
   if (completed.length === 0) {
     reviewGrid.innerHTML = '<p class="empty-state">No letters completed yet. Head to the Letters tab to start!</p>';
   } else {
     reviewGrid.innerHTML = "";
-    completed.sort().forEach(letter => {
+    completed.sort((a, b) => (stats[b]?.score || 0) - (stats[a]?.score || 0));
+
+    completed.forEach(letter => {
+      const s = stats[letter] || { avgTime: 0, skips: 0, score: 0 };
+      const avgSec = s.avgTime ? `${s.avgTime.toFixed(1)}s avg` : "New";
+      const needsPractice = s.score > 8 || s.skips > 0;
+
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "letter-card is-done";
+      btn.className = "letter-card is-done" + (needsPractice ? " needs-practice" : "");
       btn.innerHTML = `
         <span class="letter-card-letter">${letter}</span>
-        <span class="letter-card-status">Review</span>
-        <span class="letter-card-coins">${COIN} ${LETTER_COINS_REPLAY}</span>`;
+        <span class="letter-card-status">${avgSec} ${s.skips ? `(${s.skips} skips)` : ""}</span>
+        <span class="letter-card-coins">${needsPractice ? "⚠️ Needs Practice" : `${COIN}${LETTER_COINS_REPLAY}`}</span>`;
       btn.addEventListener("click", () => { returnTab = "review"; startSingleLetter(letter); });
       reviewGrid.append(btn);
     });
@@ -389,7 +424,7 @@ function renderReview() {
 
   const wordsDone = progress.wordsCompleted || [];
   const reviewWordsList = $("reviewWords");
-  if (wordsDone.length === 0) {
+  if (wordsDone.length === 0 && !(progress.reviewsDone || []).length) {
     reviewWordsList.innerHTML = '<li class="empty-state">No word sets completed yet.</li>';
   } else {
     reviewWordsList.innerHTML = "";
@@ -408,6 +443,130 @@ function renderReview() {
       reviewWordsList.append(li);
     });
   }
+  renderReviewPractice();
+}
+
+// ---------- review practice: stacks of the slowest letters ----------
+const STACK_SIZE = 5;
+const MAX_STACKS = 3;
+
+// Learned letters, slowest first (same score the "Needs Practice" tag uses), cut into stacks.
+function slowestStacks() {
+  const stats = progress.stats || {};
+  const ranked = (progress.lettersCompleted || [])
+    .filter(knows)
+    .slice() // copy, so we don't reorder the saved list
+    .sort((a, b) => (stats[b]?.score || 0) - (stats[a]?.score || 0));
+  const stacks = [];
+  for (let i = 0; i < ranked.length && stacks.length < MAX_STACKS; i += STACK_SIZE) {
+    stacks.push(ranked.slice(i, i + STACK_SIZE));
+  }
+  return stacks;
+}
+
+// A review is played like a word set where every "word" is one letter.
+function startReviewStack(letters) {
+  const playable = letters.filter(knows);
+  if (!playable.length) return;
+  returnTab = "review";
+  startWordSet({
+    id: `review-${playable.join("")}`,
+    name: "Review practice",
+    words: playable,
+    letters: playable,
+    review: true,
+    reward: playable.length * LETTER_COINS_REPLAY,
+  });
+}
+
+function finishReviewStack(ws) {
+  const coins = ws.reward;
+  progress.coins = (progress.coins || 0) + coins;
+  progress.reviewsDone = [
+    { id: ws.id, letters: ws.letters, at: Date.now() },
+    ...(progress.reviewsDone || []).filter((r) => r.id !== ws.id),
+  ].slice(0, 10);
+  persistProgress();
+
+  $("bigSticker").classList.remove("is-sticker");
+  $("bigSticker").innerHTML = `<img src="assets/coin.png" alt="coins" style="width:3rem">`;
+  $("celebrateTitle").textContent = "Review practice complete!";
+  $("celebrateText").textContent = `You practiced ${ws.letters.join(", ")}. It's saved under Completed Word Sets.`;
+  $("coinReward").textContent = `+${coins} coins`;
+  $("coinReward").hidden = false;
+  $("nextLetterBtn").hidden = true;
+  $("nextLevelBtn").hidden = true;
+  confetti();
+  $("celebrate").showModal();
+}
+
+// Draws the stacks under the Review intro, and the finished reviews under "Completed Word Sets".
+function renderReviewPractice() {
+  let box = $("reviewStacks");
+  if (!box) {
+    box = document.createElement("section");
+    box.id = "reviewStacks";
+    box.className = "review-stacks";
+    // Sit just above the "Completed Letters" heading (fall back to just above the grid).
+    const heading = [...$("tab-review").querySelectorAll("h1, h2, h3, h4")]
+      .find((h) => /completed letters/i.test(h.textContent));
+    (heading || $("reviewLetters")).before(box);
+    box.heading = heading || null;
+  }
+
+  const stacks = slowestStacks();
+  box.innerHTML = "";
+  if (stacks.length) {
+    // Copy the look of the existing headings so this one matches the page.
+    const title = box.heading ? box.heading.cloneNode(false) : document.createElement("h2");
+    title.removeAttribute("id");
+    title.textContent = "Review practice";
+    const note = document.createElement("p");
+    note.className = "review-stacks-note";
+    note.textContent = "Stacks of the letters that take you longest. Finish a stack and it's saved under Completed Word Sets.";
+    const list = document.createElement("ul");
+    list.className = "review-stack-list";
+    const stats = progress.stats || {};
+
+    stacks.forEach((letters, i) => {
+      const times = letters.map((l) => stats[l]?.avgTime || 0).filter((t) => t > 0);
+      const avg = times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0;
+      const meta = `${letters.length} letter${letters.length === 1 ? "" : "s"}${avg ? ` \u00B7 ${avg.toFixed(1)}s avg` : ""}`;
+      const rank = i === 0 ? "Slowest" : "Next slowest";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "review-stack" + (i === 0 ? " is-slowest" : "");
+      btn.innerHTML = `
+        <span class="stack-rank">${rank}</span>
+        <span class="stack-letters" aria-hidden="true">${letters.map((l) => `<b>${l}</b>`).join("")}</span>
+        <span class="stack-meta">${meta}</span>`;
+      btn.setAttribute("aria-label", `Review practice, ${rank.toLowerCase()}: ${letters.join(", ")}. ${meta}.`);
+      btn.addEventListener("click", () => startReviewStack(letters));
+      const li = document.createElement("li");
+      li.append(btn);
+      list.append(li);
+    });
+    box.append(title, note, list);
+  }
+
+  // Finished reviews go in the same list as completed word sets.
+  const done = $("reviewWords");
+  (progress.reviewsDone || []).forEach((r) => {
+    const coins = r.letters.length * LETTER_COINS_REPLAY;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "level word-level is-done";
+    btn.innerHTML = `
+      <span class="level-num wl-reward">${COIN}${coins}</span>
+      <span class="level-letters wl-words">${r.letters.join("  ")}</span>
+      <span class="level-status">Review practice</span>`;
+    btn.setAttribute("aria-label", `Review practice: ${r.letters.join(", ")}. Practice again.`);
+    btn.addEventListener("click", () => startReviewStack(r.letters));
+    const li = document.createElement("li");
+    li.append(btn);
+    done.append(li);
+  });
 }
 
 // ---------- shop tab ----------
@@ -514,6 +673,8 @@ async function openCamera() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   $("camStatus").textContent = "";
+  play.letterStart = performance.now(); // camera start-up time shouldn't count toward the letter's time
+  play.lastNudge = performance.now();
   stopLoop = runLoop(video, tracker, onFrame);
 }
 
@@ -575,7 +736,7 @@ async function startWordSet(ws) {
   play.skipped = new Set();
   document.querySelectorAll(".tab-panel").forEach(p => p.hidden = true);
   $("play").hidden = false;
-  $("wordDisplay").hidden = false;
+  $("wordDisplay").hidden = !!ws.review;
   $("levelLabel").textContent = ws.name;
   window.scrollTo(0, 0);
   showWord();
@@ -587,7 +748,7 @@ function showWord() {
   play.wordPos = 0;
   play.hold = 0;
   play.busy = false;
-  $("letterCount").textContent = `Word ${play.idx + 1} of ${play.queue.length}`;
+  $("letterCount").textContent = `${play.wordSet && play.wordSet.review ? "Letter" : "Word"} ${play.idx + 1} of ${play.queue.length}`;
   renderWordDisplay(word, 0);
   showWordLetter();
 }
@@ -626,6 +787,10 @@ function showWordLetter() {
   setRing(0);
   play.mood = "";
   play.lastClose = 0;
+  if (play.wordSet && play.wordSet.review) {
+    setMood("idle", `Show me the letter ${letter}.`, true);
+    return;
+  }
   setMood("idle", `Spell "${word}" \u2014 show me ${letter}.`, true);
 }
 
@@ -642,7 +807,7 @@ function advanceWord() {
   play.wordPos += 1;
   const word = play.queue[play.idx];
   if (play.wordPos >= word.length) {
-    const stickerNote = countWordForStickers();
+    const stickerNote = play.wordSet && play.wordSet.review ? "" : countWordForStickers();
     play.idx += 1;
     if (play.idx >= play.queue.length) {
       finishWordSet();
@@ -660,6 +825,10 @@ function finishWordSet() {
   play.busy = true;
   closeCamera();
   const ws = play.wordSet;
+  if (ws.review) {
+    finishReviewStack(ws);
+    return;
+  }
   if (ws.custom) {
     $("bigSticker").classList.remove("is-sticker");
     $("bigSticker").innerHTML = "";
@@ -775,6 +944,7 @@ function updateProgress(filled, close, almost) {
 }
 
 function success() {
+  recordLetterStat(currentTarget(), false);
   play.busy = true;
   setRing(1);
   $("target").classList.add("is-hit");
@@ -798,6 +968,7 @@ function advance() {
 
 function skipLetter() {
   if (play.busy) return;
+  recordLetterStat(currentTarget(), true);
   if (play.mode === "word") {
     const word = play.queue[play.idx];
     if (!play.skipped.has(word)) {
@@ -890,9 +1061,13 @@ function updateSettings() {
   };
   saveSettings(settings);
   applySettings();
-  const current = play.queue[play.idx];
-  if (!$("play").hidden && current) $("signImg").src = signPath(current);
-  renderTab(activeTab);
+
+  const current = play.queue?.[play.idx];
+  if (!$("play").hidden && current) {
+    const letter = typeof current === "string" && current.length > 1 ? current[play.wordPos] : current;
+    if (letter) $("signImg").src = signPath(letter);
+  }
+  if (!$("home").hidden) renderHome();
 }
 
 // ---------- wiring ----------
@@ -945,3 +1120,27 @@ $("celebrate").addEventListener("close", () => {
   modelLoaded = true;
   renderTab(activeTab);
 })();
+
+
+// ---------- smart review & practice stats ----------
+function recordLetterStat(letter, skipped = false) {
+  if (!letter) return;
+  if (!progress.stats) progress.stats = {};
+  if (!progress.stats[letter]) {
+    progress.stats[letter] = { attempts: 0, totalTime: 0, avgTime: 0, skips: 0, score: 0 };
+  }
+
+  const s = progress.stats[letter];
+  s.attempts += 1;
+
+  if (skipped) {
+    s.skips += 1;
+  } else {
+    const elapsed = Math.max(0.5, (performance.now() - play.letterStart) / 1000);
+    s.totalTime += elapsed;
+    s.avgTime = s.totalTime / Math.max(1, s.attempts - s.skips);
+  }
+
+  s.score = (s.avgTime || 5) + (s.skips * 8);
+  persistProgress();
+}
