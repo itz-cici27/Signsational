@@ -2,7 +2,7 @@
 import { createHandTracker, startCamera, runLoop, drawHand } from "./hands.js";
 import { SIGN_WORDS, NONE, SignBuffer, loadSignClassifier, signRewards } from "./signs.js";
 import { loadSettings, loadProgress, saveProgress, bumpStreak, currentStreak, loadShop } from "./store.js";
-import { mascotSVG } from "./mascot.js";
+import { mascotSVG, applyFlavor } from "./mascot.js";
 
 // How sure the model must be, and for how many checks in a row (one check every
 // PREDICT_EVERY frames, so ~10 checks per second).
@@ -35,6 +35,7 @@ let audioCtx = null;
 const play = { queue: [], idx: 0, hold: 0, busy: true, start: 0, lastNudge: 0 };
 
 document.documentElement.classList.toggle("big-text", settings.bigText);
+applyFlavor(loadShop().flavor);
 document.querySelectorAll("[data-mascot]").forEach((el) => (el.innerHTML = mascotSVG(loadShop().equipped)));
 
 function renderHeader() {

@@ -1,0 +1,326 @@
+diff --git a/css/style.css b/css/style.css
+index 658d550..d5394bb 100644
+--- a/css/style.css
++++ b/css/style.css
+@@ -67,7 +67,7 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
+ }
+ .brand { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+ .brand-mark { width: 2.2em; height: auto; display: block; }
+-.topbar-right { display: flex; align-items: center; gap: 0.75rem; }
++.topbar-right { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.75rem; }
+ .streak {
+   font-family: var(--display);
+   font-weight: 600;
+@@ -299,15 +299,15 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
+ .mascot-stage.small { width: 88px; flex: none; }
+ .mascot { width: 100%; height: auto; display: block; overflow: visible; }
+ .m-shadow { fill: var(--ink); opacity: 0.12; }
+-.m-blob { fill: var(--mint); stroke: var(--ink); stroke-width: 4.5; }
+-.m-arm ellipse { fill: var(--mint); stroke: var(--ink); stroke-width: 4; }
++.m-blob { fill: var(--mochi, var(--mint)); stroke: var(--ink); stroke-width: 4.5; transition: fill 250ms ease; }
++.m-arm ellipse { fill: var(--mochi, var(--mint)); stroke: var(--ink); stroke-width: 4; transition: fill 250ms ease; }
+ .m-gloss { fill: none; stroke: var(--white); stroke-width: 6; stroke-linecap: round; opacity: 0.75; }
+ .m-sprout { fill: var(--mint-deep); stroke: var(--ink); stroke-width: 3.5; stroke-linejoin: round; }
+ .m-eye { fill: var(--ink); }
+ .m-shine { fill: var(--white); }
+ .m-happy path { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+ .m-happy { opacity: 0; }
+-.m-cheek { fill: var(--pink); opacity: 0.8; transition: opacity 250ms ease; }
++.m-cheek { fill: var(--mochi-cheek, var(--pink)); opacity: 0.8; transition: opacity 250ms ease; }
+ .m-smile { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+ .m-wow { fill: var(--ink); opacity: 0; }
+ .m-sparkle { fill: var(--sun); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+@@ -600,3 +600,64 @@ legend { font-weight: 700; padding: 0 0.4rem; }
+ @media (prefers-reduced-motion: reduce) {
+   *, *::before, *::after { animation: none !important; transition: none !important; }
+ }
++
++/* ---------- Mochi flavors (picked in Mochi's Shop) ---------- */
++html[data-flavor="matcha"] { --mochi: #9BE8C8; --mochi-cheek: #FF6FAE; }
++html[data-flavor="strawberry"] { --mochi: #FFB8D2; --mochi-cheek: #F0508F; }
++html[data-flavor="mango"] { --mochi: #FFD98A; --mochi-cheek: #FF8A65; }
++html[data-flavor="ube"] { --mochi: #CDB4F5; --mochi-cheek: #FF6FAE; }
++html[data-flavor="blueberry"] { --mochi: #A9C8FF; --mochi-cheek: #FF6FAE; }
++html[data-flavor="peach"] { --mochi: #FFC2A3; --mochi-cheek: #FF6F91; }
++html[data-flavor="vanilla"] { --mochi: #FFF3D6; --mochi-cheek: #FF8FB8; }
++html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8; }
++
++.flavor {
++  font: inherit;
++  color: var(--ink);
++  background: var(--white);
++  border: 3px solid var(--ink);
++  border-radius: 18px;
++  padding: 0.6rem 0.4rem;
++  min-height: 44px;
++  display: grid;
++  justify-items: center;
++  gap: 0.25rem;
++  cursor: pointer;
++  box-shadow: 0 3px 0 var(--ink);
++  transition: transform 80ms ease, box-shadow 80ms ease;
++}
++.flavor:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
++.flavor[aria-checked="true"] { outline: 4px solid var(--pink); outline-offset: 2px; }
++.flavor .flavor-swatch { width: 44px; height: auto; }
++.flavor-name { font-family: var(--display); font-weight: 600; font-size: 0.9rem; }
++
++/* Flavor tab in the top bar */
++.flavor-menu { position: relative; }
++.flavor-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.9rem 0.3rem 0.5rem; }
++.flavor-btn .flavor-swatch { width: 30px; height: auto; display: block; }
++.flavor-btn[aria-expanded="true"] { background: var(--paper); }
++.flavor-panel {
++  position: absolute;
++  top: calc(100% + 10px);
++  right: 0;
++  z-index: 20;
++  width: min(23rem, calc(100vw - 2rem));
++  background: var(--white);
++  border: 3px solid var(--ink);
++  border-radius: 24px;
++  padding: 1rem;
++  box-shadow: 0 6px 0 var(--ink);
++}
++.flavor-panel-title { margin: 0 0 0.75rem; font-family: var(--display); font-weight: 600; font-size: 1.1rem; }
++.flavor-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; }
++.flavor-options .flavor { box-shadow: 0 3px 0 var(--ink); padding: 0.5rem 0.25rem; }
++.flavor-options .flavor-name { font-size: 0.8rem; line-height: 1.15; text-align: center; min-width: 0; max-width: 100%; }
++.flavor-options .flavor { min-width: 0; }
++@media (max-width: 600px) {
++  .flavor-btn-label { display: none; }
++  .flavor-btn { padding: 0.3rem 0.5rem; }
++  .flavor-panel { position: fixed; top: 4.5rem; left: 1rem; right: 1rem; width: auto; }
++  .flavor-options { gap: 0.4rem; }
++  .flavor-options .flavor { padding: 0.45rem 0.1rem; }
++  .flavor-options .flavor-name { font-size: 0.72rem; }
++}
+diff --git a/index.html b/index.html
+index ab7b826..738de8c 100644
+--- a/index.html
++++ b/index.html
+@@ -136,6 +136,7 @@
+ 
+   <footer class="foot"><a href="recorder.html">Team tools: record training data</a> · <a href="words-recorder.html">record word signs</a></footer>
+ 
++  <script type="module" src="js/flavor-menu.js"></script>
+   <script type="module" src="js/game.js"></script>
+   <script type="module" src="js/sign-words-home.js"></script>
+ </body>
+diff --git a/js/flavor-menu.js b/js/flavor-menu.js
+new file mode 100644
+index 0000000..f4c1511
+--- /dev/null
++++ b/js/flavor-menu.js
+@@ -0,0 +1,98 @@
++// "Flavor" tab in the top bar: opens a menu of Mochi flavors (colors) to pick from.
++// Works on any page with a .topbar-right. The choice is saved in the shop data, applied
++// right away to every Mochi on the page, and announced with a "mochi:flavor" event so
++// game.js can sync it to the cloud.
++import { FLAVORS, applyFlavor } from "./mascot.js";
++import { loadShop, saveShop } from "./store.js";
++
++const swatch = (fill) => `
++  <svg class="flavor-swatch" viewBox="20 14 140 120" aria-hidden="true">
++    <path d="M90 33C86 22 76 17 66 19C70 29 80 34 90 33zM90 33C96 20 108 16 118 20C112 31 102 35 90 33z" fill="#2FA87A" stroke="#2B1B4A" stroke-width="6" stroke-linejoin="round"/>
++    <path d="M90 32C132 32 156 64 156 94C156 118 128 130 90 130C52 130 24 118 24 94C24 64 48 32 90 32z" fill="${fill}" stroke="#2B1B4A" stroke-width="7"/>
++    <ellipse cx="70" cy="88" rx="9" ry="11" fill="#2B1B4A"/><ellipse cx="110" cy="88" rx="9" ry="11" fill="#2B1B4A"/>
++  </svg>`;
++
++const current = () => document.documentElement.dataset.flavor || loadShop().flavor || "matcha";
++
++export function mountFlavorMenu() {
++  const bar = document.querySelector(".topbar-right");
++  if (!bar || document.getElementById("flavorBtn")) return;
++  applyFlavor(loadShop().flavor);
++
++  const wrap = document.createElement("div");
++  wrap.className = "flavor-menu";
++  wrap.innerHTML = `
++    <button class="btn btn-quiet flavor-btn" id="flavorBtn" type="button"
++      aria-haspopup="true" aria-expanded="false" aria-controls="flavorPanel">
++      ${swatch("var(--mochi, var(--mint))")}<span class="flavor-btn-label">Flavor</span>
++    </button>
++    <div class="flavor-panel" id="flavorPanel" hidden>
++      <p class="flavor-panel-title" id="flavorPanelTitle">Pick Mochi's flavor</p>
++      <div class="flavor-options" role="radiogroup" aria-labelledby="flavorPanelTitle">
++        ${FLAVORS.map((f) => `
++          <button type="button" class="flavor" role="radio" data-flavor="${f.id}" aria-checked="false" tabindex="-1">
++            ${swatch(f.body)}<span class="flavor-name">${f.name}</span>
++          </button>`).join("")}
++      </div>
++    </div>`;
++  bar.prepend(wrap);
++
++  const btn = wrap.querySelector("#flavorBtn");
++  const panel = wrap.querySelector("#flavorPanel");
++  const options = [...wrap.querySelectorAll(".flavor")];
++
++  const sync = () => {
++    const id = current();
++    options.forEach((o) => {
++      const on = o.dataset.flavor === id;
++      o.setAttribute("aria-checked", String(on));
++      o.tabIndex = on ? 0 : -1;
++    });
++    const f = FLAVORS.find((x) => x.id === id);
++    btn.setAttribute("aria-label", `Mochi flavor: ${f ? f.name : "Matcha"}. Change flavor`);
++  };
++
++  const open = () => {
++    sync();
++    panel.hidden = false;
++    btn.setAttribute("aria-expanded", "true");
++    (options.find((o) => o.tabIndex === 0) || options[0]).focus();
++  };
++  const close = (refocus = true) => {
++    if (panel.hidden) return;
++    panel.hidden = true;
++    btn.setAttribute("aria-expanded", "false");
++    if (refocus) btn.focus();
++  };
++
++  const choose = (id) => {
++    const shop = loadShop();
++    shop.flavor = id;
++    saveShop(shop);
++    applyFlavor(id);
++    sync();
++    window.dispatchEvent(new CustomEvent("mochi:flavor", { detail: id }));
++  };
++
++  btn.addEventListener("click", () => (panel.hidden ? open() : close()));
++  options.forEach((o, i) => {
++    o.addEventListener("click", () => choose(o.dataset.flavor));
++    o.addEventListener("keydown", (e) => {
++      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
++      if (!step) return;
++      e.preventDefault();
++      const next = options[(i + step + options.length) % options.length];
++      choose(next.dataset.flavor);
++      next.focus();
++    });
++  });
++  wrap.addEventListener("keydown", (e) => {
++    if (e.key === "Escape") close();
++  });
++  document.addEventListener("click", (e) => {
++    if (!wrap.contains(e.target)) close(false);
++  });
++  sync();
++}
++
++mountFlavorMenu();
+diff --git a/js/game.js b/js/game.js
+index 463cdee..73209f7 100644
+--- a/js/game.js
++++ b/js/game.js
+@@ -5,7 +5,7 @@ import {
+   loadSettings, saveSettings, loadProgress, saveProgress, bumpStreak, currentStreak,
+   loadShop, saveShop,
+ } from "./store.js";
+-import { mascotSVG } from "./mascot.js";
++import { mascotSVG, applyFlavor } from "./mascot.js";
+ import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud } from "./firebase.js";
+ 
+ // How sure the model must be, and for how many frames in a row (~30 frames = 1 second).
+@@ -64,7 +64,15 @@ const play = {
+   mood: "idle", moodAt: 0, lastClose: 0,
+ };
+ 
++// The Flavor tab in the top bar (js/flavor-menu.js) saves the pick; keep our copy in step
++// so later saves don't overwrite it, and sync it to the cloud.
++window.addEventListener("mochi:flavor", (e) => {
++  shop.flavor = e.detail;
++  persistShop();
++});
++
+ function renderMascots() {
++  applyFlavor(shop.flavor);
+   document.querySelectorAll("[data-mascot]").forEach((el) => {
+     el.innerHTML = mascotSVG(shop.equipped);
+   });
+@@ -173,6 +181,7 @@ function mergeShop(local, cloud) {
+   return {
+     owned: [...new Set([...local.owned, ...(cloud.owned || [])])],
+     equipped: cloud.equipped && cloud.equipped.length ? cloud.equipped : local.equipped,
++    flavor: cloud.flavor || local.flavor || "matcha",
+   };
+ }
+ 
+diff --git a/js/mascot.js b/js/mascot.js
+index 269fa3b..0ebef47 100644
+--- a/js/mascot.js
++++ b/js/mascot.js
+@@ -5,6 +5,25 @@
+ //   "is-cheer"  success: arms up, happy ^^ eyes, hop, sparkles
+ //   "is-think"  encouraging nudge: little "o" mouth, head tilt
+ // Accessories are SVG snippets toggled by the shop system.
++// Flavors recolor Mochi through CSS variables (--mochi, --mochi-cheek) set on <html data-flavor>.
++
++// Free to pick. Colors live in css/style.css under html[data-flavor="..."]; `body` here is only
++// used to draw the swatch in the flavor picker.
++export const FLAVORS = [
++  { id: "matcha", name: "Matcha", body: "#9BE8C8" },
++  { id: "strawberry", name: "Strawberry", body: "#FFB8D2" },
++  { id: "mango", name: "Mango", body: "#FFD98A" },
++  { id: "ube", name: "Ube", body: "#CDB4F5" },
++  { id: "blueberry", name: "Blueberry", body: "#A9C8FF" },
++  { id: "peach", name: "Peach", body: "#FFC2A3" },
++  { id: "vanilla", name: "Vanilla", body: "#FFF3D6" },
++  { id: "sesame", name: "Black Sesame", body: "#C9C3D3" },
++];
++
++export function applyFlavor(id) {
++  const known = FLAVORS.some((f) => f.id === id);
++  document.documentElement.dataset.flavor = known ? id : "matcha";
++}
+ 
+ const ACCESSORIES = {
+   cape: `<path class="m-acc" d="M36 52c-12 18-14 42 0 50l48 0c14-8 12-32 0-50" fill="#9B59B6" stroke="var(--ink)" stroke-width="2.5" opacity="0.8"/>`,
+diff --git a/js/signs-game.js b/js/signs-game.js
+index e08f763..dc45b89 100644
+--- a/js/signs-game.js
++++ b/js/signs-game.js
+@@ -2,7 +2,7 @@
+ import { createHandTracker, startCamera, runLoop, drawHand } from "./hands.js";
+ import { SIGN_WORDS, NONE, SignBuffer, loadSignClassifier, signRewards } from "./signs.js";
+ import { loadSettings, loadProgress, saveProgress, bumpStreak, currentStreak, loadShop } from "./store.js";
+-import { mascotSVG } from "./mascot.js";
++import { mascotSVG, applyFlavor } from "./mascot.js";
+ 
+ // How sure the model must be, and for how many checks in a row (one check every
+ // PREDICT_EVERY frames, so ~10 checks per second).
+@@ -35,6 +35,7 @@ let audioCtx = null;
+ const play = { queue: [], idx: 0, hold: 0, busy: true, start: 0, lastNudge: 0 };
+ 
+ document.documentElement.classList.toggle("big-text", settings.bigText);
++applyFlavor(loadShop().flavor);
+ document.querySelectorAll("[data-mascot]").forEach((el) => (el.innerHTML = mascotSVG(loadShop().equipped)));
+ 
+ function renderHeader() {
+diff --git a/js/store.js b/js/store.js
+index 952a100..e330599 100644
+--- a/js/store.js
++++ b/js/store.js
+@@ -32,7 +32,7 @@ export const saveSettings = (s) => setItem("sls_settings", s);
+ export const loadProgress = () => ({ completed: [], streak: 0, lastDay: null, coins: 0, wordsCompleted: [], ...getItem("sls_progress", {}) });
+ export const saveProgress = (p) => setItem("sls_progress", p);
+ 
+-export const loadShop = () => ({ owned: [], equipped: [], ...getItem("sls_shop", {}) });
++export const loadShop = () => ({ owned: [], equipped: [], flavor: "matcha", ...getItem("sls_shop", {}) });
+ export const saveShop = (s) => setItem("sls_shop", s);
+ 
+ export const loadSamples = () => getItem("sls_samples", []);
+diff --git a/signs.html b/signs.html
+index 5fa0519..2bdb4d5 100644
+--- a/signs.html
++++ b/signs.html
+@@ -74,6 +74,7 @@
+     </div>
+   </dialog>
+ 
++  <script type="module" src="js/flavor-menu.js"></script>
+   <script type="module" src="js/signs-game.js"></script>
+ </body>
+ </html>

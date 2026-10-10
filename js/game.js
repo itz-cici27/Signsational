@@ -5,7 +5,7 @@ import {
   loadSettings, saveSettings, loadProgress, saveProgress, bumpStreak, currentStreak,
   loadShop, saveShop,
 } from "./store.js";
-import { mascotSVG } from "./mascot.js";
+import { mascotSVG, applyFlavor } from "./mascot.js";
 import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud } from "./firebase.js";
 
 // How sure the model must be, and for how many frames in a row (~30 frames = 1 second).
@@ -64,7 +64,15 @@ const play = {
   mood: "idle", moodAt: 0, lastClose: 0,
 };
 
+// The Flavor tab in the top bar (js/flavor-menu.js) saves the pick; keep our copy in step
+// so later saves don't overwrite it, and sync it to the cloud.
+window.addEventListener("mochi:flavor", (e) => {
+  shop.flavor = e.detail;
+  persistShop();
+});
+
 function renderMascots() {
+  applyFlavor(shop.flavor);
   document.querySelectorAll("[data-mascot]").forEach((el) => {
     el.innerHTML = mascotSVG(shop.equipped);
   });
@@ -173,21 +181,20 @@ function mergeShop(local, cloud) {
   return {
     owned: [...new Set([...local.owned, ...(cloud.owned || [])])],
     equipped: cloud.equipped && cloud.equipped.length ? cloud.equipped : local.equipped,
+    flavor: cloud.flavor || local.flavor || "matcha",
   };
 }
 
 function updateAuthUI(user) {
-  $("signInBtn").hidden = !!user;
-  $("userInfo").hidden = !user;
+  const btn = $("authBtn");
+  const avatar = $("userAvatar");
   if (user) {
-    $("userName").textContent = user.displayName || "Signed in";
-    const avatar = $("userAvatar");
-    if (user.photoURL) {
-      avatar.src = user.photoURL;
-      avatar.hidden = false;
-    } else {
-      avatar.hidden = true;
-    }
+    btn.textContent = "Sign out";
+    if (user.photoURL) { avatar.src = user.photoURL; avatar.hidden = false; }
+    else { avatar.hidden = true; }
+  } else {
+    btn.textContent = "Sign in";
+    avatar.hidden = true;
   }
 }
 
@@ -698,12 +705,15 @@ $("continueBtn").addEventListener("click", () => {
 $("backBtn").addEventListener("click", goHome);
 $("skipBtn").addEventListener("click", skipLetter);
 $("settingsBtn").addEventListener("click", openSettings);
-$("signInBtn").addEventListener("click", async () => {
-  try { await signIn(); } catch (err) {
-    if (err.code !== "auth/popup-closed-by-user") console.error("Sign-in failed:", err);
+$("authBtn").addEventListener("click", async () => {
+  if (currentUser()) {
+    signOutUser();
+  } else {
+    try { await signIn(); } catch (err) {
+      if (err.code !== "auth/popup-closed-by-user") console.error("Sign-in failed:", err);
+    }
   }
 });
-$("signOutBtn").addEventListener("click", () => signOutUser());
 $("settingsDone").addEventListener("click", () => $("settings").close());
 $("settings").addEventListener("change", updateSettings);
 

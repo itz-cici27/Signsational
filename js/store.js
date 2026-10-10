@@ -32,7 +32,7 @@ export const saveSettings = (s) => setItem("sls_settings", s);
 export const loadProgress = () => ({ completed: [], streak: 0, lastDay: null, coins: 0, wordsCompleted: [], ...getItem("sls_progress", {}) });
 export const saveProgress = (p) => setItem("sls_progress", p);
 
-export const loadShop = () => ({ owned: [], equipped: [], ...getItem("sls_shop", {}) });
+export const loadShop = () => ({ owned: [], equipped: [], flavor: "matcha", ...getItem("sls_shop", {}) });
 export const saveShop = (s) => setItem("sls_shop", s);
 
 export const loadSamples = () => getItem("sls_samples", []);

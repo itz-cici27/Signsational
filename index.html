@@ -25,12 +25,8 @@
         <span aria-hidden="true">🔥</span> <b id="streakCount">0</b> <span class="streak-label">day streak</span>
       </span>
       <button class="btn btn-quiet" id="settingsBtn" type="button">Settings</button>
-      <button class="btn btn-quiet" id="signInBtn" type="button">Sign in</button>
-      <div id="userInfo" hidden class="user-info">
-        <img class="avatar" id="userAvatar" alt="" hidden>
-        <span id="userName"></span>
-        <button class="btn btn-quiet btn-sm" id="signOutBtn" type="button">Sign out</button>
-      </div>
+      <button class="btn btn-quiet btn-auth" id="authBtn" type="button">Sign in</button>
+      <img class="avatar" id="userAvatar" alt="" hidden>
     </div>
   </header>
 
@@ -136,6 +132,7 @@
 
   <footer class="foot"><a href="recorder.html">Team tools: record training data</a> · <a href="words-recorder.html">record word signs</a></footer>
 
+  <script type="module" src="js/flavor-menu.js"></script>
   <script type="module" src="js/game.js"></script>
   <script type="module" src="js/sign-words-home.js"></script>
 </body>
