@@ -632,7 +632,7 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8; }
   top: calc(100% + 10px);
   right: 0;
   z-index: 20;
-  width: min(23rem, calc(100vw - 2rem));
+  width: min(27rem, calc(100vw - 2rem));
   background: var(--white);
   border: 3px solid var(--ink);
   border-radius: 24px;
@@ -641,7 +641,7 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8; }
 }
 .flavor-panel-title { margin: 0 0 0.75rem; font-family: var(--display); font-weight: 600; font-size: 1.1rem; }
 .flavor-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; }
-.flavor-options .flavor { box-shadow: 0 3px 0 var(--ink); padding: 0.5rem 0.25rem; }
+.flavor-options .flavor { box-shadow: 0 3px 0 var(--ink); padding: 0.55rem 0.5rem; }
 .flavor-options .flavor-name { font-size: 0.8rem; line-height: 1.15; text-align: center; min-width: 0; max-width: 100%; }
 .flavor-options .flavor { min-width: 0; }
 @media (max-width: 600px) {
@@ -649,6 +649,7 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8; }
   .flavor-btn { padding: 0.3rem 0.5rem; }
   .flavor-panel { position: fixed; top: 4.5rem; left: 1rem; right: 1rem; width: auto; }
   .flavor-options { gap: 0.4rem; }
-  .flavor-options .flavor { padding: 0.45rem 0.1rem; }
-  .flavor-options .flavor-name { font-size: 0.72rem; }
+  .flavor-panel { padding: 0.85rem; }
+  .flavor-options .flavor { padding: 0.45rem 0.35rem; }
+  .flavor-options .flavor-name { font-size: 0.66rem; }
 }
