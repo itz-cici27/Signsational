@@ -8,6 +8,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc,
+  collection, query, orderBy, limit, getDocs,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const app = initializeApp({
@@ -44,6 +45,13 @@ export async function saveToCloud(progress, shopData) {
   if (!user) return;
   try {
     await setDoc(doc(db, "users", user.uid), { progress, shop: shopData }, { merge: true });
+    // Also write to the leaderboard collection (public-readable, minimal data).
+    await setDoc(doc(db, "leaderboard", user.uid), {
+      displayName: user.displayName || "Anonymous",
+      photoURL: user.photoURL || "",
+      streak: progress.streak || 0,
+      lastDay: progress.lastDay || null,
+    });
   } catch (err) {
     console.error("Cloud save failed:", err);
   }
@@ -58,5 +66,16 @@ export async function loadFromCloud() {
   } catch (err) {
     console.error("Cloud load failed:", err);
     return null;
+  }
+}
+
+export async function getLeaderboard(count = 20) {
+  try {
+    const q = query(collection(db, "leaderboard"), orderBy("streak", "desc"), limit(count));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+  } catch (err) {
+    console.error("Leaderboard load failed:", err);
+    return [];
   }
 }

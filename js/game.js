@@ -7,7 +7,7 @@ import {
   loadSettings, saveSettings, loadProgress, saveProgress, bumpStreak, currentStreak,
   loadShop, saveShop,
 } from "./store.js";
-import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud } from "./firebase.js";
+import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud, getLeaderboard } from "./firebase.js";
 import { stickerStats, newStickers, stickerSVG, STICKERS, hasSticker } from "./stickers.js";
 
 const COIN = `<img class="coin-icon" src="assets/coin.png" alt="coins" aria-hidden="true">`;
@@ -209,6 +209,7 @@ function renderTab(tab) {
   else if (tab === "words") renderWords();
   else if (tab === "review") renderReview();
   else if (tab === "shop") renderShop();
+  else if (tab === "leaderboard") renderLeaderboard();
 }
 
 document.querySelectorAll(".tab").forEach(btn => {
@@ -623,6 +624,74 @@ function handleShopClick(itemId) {
     renderShop();
     $("coinDisplay").textContent = progress.coins;
   }
+}
+
+// ---------- leaderboard tab ----------
+async function renderLeaderboard() {
+  const list = $("leaderboardList");
+  const note = $("leaderboardNote");
+  const user = currentUser();
+
+  if (!user) {
+    list.innerHTML = "";
+    note.textContent = "Sign in to see the leaderboard and track your streak.";
+    return;
+  }
+
+  list.innerHTML = '<p class="loading">Loading leaderboard\u2026</p>';
+  note.textContent = "";
+
+  const entries = await getLeaderboard(20);
+  if (!entries.length) {
+    list.innerHTML = "";
+    note.textContent = "No streaks yet. Practice daily to be the first on the board!";
+    return;
+  }
+
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const yd = new Date(today);
+  yd.setDate(yd.getDate() - 1);
+  const yesterdayKey = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, "0")}-${String(yd.getDate()).padStart(2, "0")}`;
+
+  // Only show entries with an active streak (practiced today or yesterday).
+  const active = entries
+    .map(e => ({
+      ...e,
+      activeStreak: (e.lastDay === todayKey || e.lastDay === yesterdayKey) ? e.streak : 0,
+    }))
+    .filter(e => e.activeStreak > 0)
+    .sort((a, b) => b.activeStreak - a.activeStreak);
+
+  if (!active.length) {
+    list.innerHTML = "";
+    note.textContent = "No active streaks right now. Practice today to get on the board!";
+    return;
+  }
+
+  list.innerHTML = active.map((entry, i) => {
+    const isMe = entry.uid === user.uid;
+    const medal = i === 0 ? "\uD83E\uDD47" : i === 1 ? "\uD83E\uDD48" : i === 2 ? "\uD83E\uDD49" : `${i + 1}`;
+    const avatar = entry.photoURL
+      ? `<img class="lb-avatar" src="${entry.photoURL}" alt="" referrerpolicy="no-referrer">`
+      : `<span class="lb-avatar lb-avatar-placeholder"></span>`;
+    return `<div class="lb-row${isMe ? " is-me" : ""}">
+      <span class="lb-rank">${medal}</span>
+      ${avatar}
+      <span class="lb-name">${escapeHtml(entry.displayName)}${isMe ? " (you)" : ""}</span>
+      <span class="lb-streak">\uD83D\uDD25 ${entry.activeStreak} day${entry.activeStreak === 1 ? "" : "s"}</span>
+    </div>`;
+  }).join("");
+
+  if (!active.some(e => e.uid === user.uid)) {
+    note.textContent = "Practice today to appear on the leaderboard!";
+  }
+}
+
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
 }
 
 // ---------- navigation ----------
