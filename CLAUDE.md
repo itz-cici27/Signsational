@@ -43,7 +43,7 @@ Uses leave-one-signer-out cross-validation when multiple signers' data is presen
 
 **Feature vector:** 63 floats = 21 landmarks × 3 coords (x, y, z), centered on wrist, normalized by palm size. Left-handed input is mirrored to match right-handed training data.
 
-**Letters covered:** A–Y excluding J and Z (which require motion). 24 static letters across 5 levels.
+**Letters covered:** all 26. The 24 static letters use the single-frame MLP; J and Z (traced in the air) use the clip model in `js/signs.js` (`model/words.json`), and only appear in levels once `train_words.py` has J/Z clips from `words-recorder.html`.
 
 **Word challenges:** 4 word sets where users fingerspell complete words letter by letter (e.g. CAT → sign C, then A, then T). Uses the same classifier — no motion recognition needed.
 

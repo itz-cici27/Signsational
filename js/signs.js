@@ -18,43 +18,56 @@ export const PER_FRAME = 44;
 export const NONE = "NONE"; // "not a word": still hands, fidgeting, letters
 const MAX_GAP_MS = 150; // a clip is invalid if the hand vanished for longer than this
 
+// `video` is the clip SignASL.org shows for the sign (signasl.org/sign/<slug>),
+// played on a loop on the sign page.
+const VIDEO_BASE = "https://media.signbsl.com/videos/asl/";
+
 // The first five have starter data from the open dataset. The rest appear in
 // the game once your team records them in words-recorder.html and retrains.
 export const SIGN_WORDS = [
   {
     word: "HELLO", emoji: "\u{1F44B}", slug: "hello",
+    video: VIDEO_BASE + "startasl/mp4/hello.mp4",
     hint: "Touch the side of your forehead with a flat hand, then move it out and away, like a little salute.",
   },
   {
     word: "THANK YOU", emoji: "\u{1F64F}", slug: "thank-you",
+    video: VIDEO_BASE + "startasl/mp4/thankyou.mp4",
     hint: "Touch your fingertips to your chin with a flat hand, then move your hand forward and down.",
   },
   {
     word: "PLEASE", emoji: "\u{1F97A}", slug: "please",
+    video: VIDEO_BASE + "startasl/mp4/please.mp4",
     hint: "Rub a flat hand in a circle on your chest.",
   },
   {
     word: "SORRY", emoji: "\u{1F614}", slug: "sorry",
+    video: VIDEO_BASE + "startasl/mp4/sorry.mp4",
     hint: "Make a fist (the letter A) and rub it in a circle on your chest.",
   },
   {
     word: "WELCOME", emoji: "\u{1F917}", slug: "welcome",
+    video: VIDEO_BASE + "aslsignbank/mp4/WELCOME-1476.mp4",
     hint: "Hold a flat hand out to the side, palm up, and sweep it in toward your body.",
   },
   {
     word: "YES", emoji: "\u{1F44D}", slug: "yes",
+    video: VIDEO_BASE + "startasl/mp4/yes.mp4",
     hint: "Make a fist (the letter S) and nod it up and down at the wrist, like a head nodding.",
   },
   {
     word: "NO", emoji: "\u{1F645}", slug: "no",
+    video: VIDEO_BASE + "startasl/mp4/no.mp4",
     hint: "Hold your index and middle fingers out, then snap them closed onto your thumb.",
   },
   {
     word: "EAT", emoji: "\u{1F34E}", slug: "eat",
+    video: VIDEO_BASE + "startasl/mp4/eat.mp4",
     hint: "Bunch your fingertips together onto your thumb and tap them to your mouth twice.",
   },
   {
     word: "I LOVE YOU", emoji: "\u{1F91F}", slug: "i-love-you",
+    video: VIDEO_BASE + "youtube/mp4/dEUvcuoKxsk.mp4",
     hint: "Stretch out your thumb, index finger, and pinky. Keep the middle two fingers down. Face your palm out.",
   },
 ];

@@ -87,6 +87,11 @@ function showSign() {
   $("signName").textContent = s.word;
   $("hint").textContent = s.hint;
   $("signVideo").href = `https://www.signasl.org/sign/${s.slug}`;
+  const demo = $("demoVideo");
+  $("signDemo").hidden = true;
+  demo.onloadeddata = () => ($("signDemo").hidden = false);
+  demo.onerror = () => ($("signDemo").hidden = true); // offline: just leave it out
+  demo.src = s.video;
   $("seeing").textContent = "";
   setRing(0);
   say(`Sign ${s.word} for me. Repeat it until the ring fills.`);
@@ -189,7 +194,7 @@ $("celebrate").addEventListener("close", nextSign);
     $("signName").textContent = "No word model yet";
     $("hint").innerHTML = 'Record words in the <a href="words-recorder.html">word recorder</a>, then run <code>python train_words.py</code>.';
     $("skipBtn").hidden = true;
-    $("signVideo").hidden = true;
+    $("signDemo").hidden = true;
     return;
   }
   const wanted = new URLSearchParams(location.search).get("word");
