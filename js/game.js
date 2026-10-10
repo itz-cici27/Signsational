@@ -7,7 +7,7 @@ import {
   loadShop, saveShop,
 } from "./store.js";
 import { mascotSVG, applyFlavor } from "./mascot.js";
-import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud, getLeaderboard } from "./firebase.js";
+import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud, getLeaderboard, ensureLeaderboardEntry } from "./firebase.js";
 import { STICKERS, stickerStats, hasSticker, newStickers, lockedCaption, stickerSVG } from "./stickers.js";
 
 const COIN = `<img class="coin-icon" src="assets/coin.png" alt="coins" aria-hidden="true">`;
@@ -515,7 +515,7 @@ async function renderLeaderboard() {
   const entries = await getLeaderboard(20);
   if (!entries.length) {
     list.innerHTML = "";
-    note.textContent = "No streaks yet. Practice daily to be the first on the board!";
+    note.textContent = "No streaks on the board yet. Practice a letter to start your streak!";
     return;
   }
 
@@ -1062,6 +1062,7 @@ $("celebrate").addEventListener("close", () => {
         saveShop(shop);
       }
       syncToCloud();
+      ensureLeaderboardEntry(progress);
       renderMascots();
       renderTab(activeTab);
     }

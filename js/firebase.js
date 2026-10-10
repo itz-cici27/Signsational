@@ -69,6 +69,27 @@ export async function loadFromCloud() {
   }
 }
 
+// Ensure the signed-in user has a leaderboard entry (backfills for users who
+// signed in before the leaderboard feature existed).
+export async function ensureLeaderboardEntry(progress) {
+  const user = auth.currentUser;
+  if (!user) return;
+  try {
+    const ref = doc(db, "leaderboard", user.uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        displayName: user.displayName || "Anonymous",
+        photoURL: user.photoURL || "",
+        streak: progress.streak || 0,
+        lastDay: progress.lastDay || null,
+      });
+    }
+  } catch (err) {
+    console.error("Leaderboard backfill failed:", err);
+  }
+}
+
 export async function getLeaderboard(count = 20) {
   try {
     const q = query(collection(db, "leaderboard"), orderBy("streak", "desc"), limit(count));
@@ -76,6 +97,10 @@ export async function getLeaderboard(count = 20) {
     return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
   } catch (err) {
     console.error("Leaderboard load failed:", err);
+    // Surface permission errors so the user knows to update Firestore rules.
+    if (err.code === "permission-denied") {
+      console.error("Firestore rules need a leaderboard read rule. See CLAUDE.md or ask for help.");
+    }
     return [];
   }
 }
