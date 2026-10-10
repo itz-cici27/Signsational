@@ -1,0 +1,435 @@
+From f1d8bf04e080daf543a31a1be63a4ff6661bff81 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 10 Oct 2026 12:53:09 -0500
+Subject: [PATCH] Cuter Mochi mascot with moods and encouraging messages
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01L1wATQMgrMEJKd3BsTirwc
+---
+ assets/mochi-icon.svg |  1 +
+ css/style.css         | 52 +++++++++++++++++++++------
+ index.html            |  4 +--
+ js/classifier.js      | 12 ++++---
+ js/game.js            | 84 +++++++++++++++++++++++++++++++++----------
+ js/mascot.js          | 65 +++++++++++++++++++++++----------
+ recorder.html         |  4 +--
+ 7 files changed, 168 insertions(+), 54 deletions(-)
+ create mode 100644 assets/mochi-icon.svg
+
+diff --git a/assets/mochi-icon.svg b/assets/mochi-icon.svg
+new file mode 100644
+index 0000000..b54b3c5
+--- /dev/null
++++ b/assets/mochi-icon.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 8 144 126"><path d="M80 30C122 30 146 62 146 92C146 116 118 128 80 128C42 128 14 116 14 92C14 62 38 30 80 30z" fill="#9BE8C8" stroke="#2B1B4A" stroke-width="8"/><path d="M80 31C76 18 64 12 52 15C56 27 68 33 80 31zM80 31C86 16 100 11 112 16C104 29 92 34 80 31z" fill="#2FA87A" stroke="#2B1B4A" stroke-width="6" stroke-linejoin="round"/><ellipse cx="58" cy="86" rx="10" ry="12" fill="#2B1B4A"/><ellipse cx="102" cy="86" rx="10" ry="12" fill="#2B1B4A"/><circle cx="62" cy="81" r="4" fill="#fff"/><circle cx="106" cy="81" r="4" fill="#fff"/><ellipse cx="38" cy="104" rx="12" ry="7" fill="#FF6FAE"/><ellipse cx="122" cy="104" rx="12" ry="7" fill="#FF6FAE"/><path d="M70 100q5 7 10 0q5 7 10 0" fill="none" stroke="#2B1B4A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+diff --git a/css/style.css b/css/style.css
+index 798548d..658d550 100644
+--- a/css/style.css
++++ b/css/style.css
+@@ -65,7 +65,8 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
+   justify-content: space-between;
+   gap: 1rem;
+ }
+-.brand { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-decoration: none; }
++.brand { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
++.brand-mark { width: 2.2em; height: auto; display: block; }
+ .topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+ .streak {
+   font-family: var(--display);
+@@ -298,23 +299,54 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
+ .mascot-stage.small { width: 88px; flex: none; }
+ .mascot { width: 100%; height: auto; display: block; overflow: visible; }
+ .m-shadow { fill: var(--ink); opacity: 0.12; }
+-.m-blob, .m-arm ellipse { fill: var(--mint); stroke: var(--ink); stroke-width: 3; }
+-.m-sprout { fill: var(--mint-deep); stroke: var(--ink); stroke-width: 2.5; }
++.m-blob { fill: var(--mint); stroke: var(--ink); stroke-width: 4.5; }
++.m-arm ellipse { fill: var(--mint); stroke: var(--ink); stroke-width: 4; }
++.m-gloss { fill: none; stroke: var(--white); stroke-width: 6; stroke-linecap: round; opacity: 0.75; }
++.m-sprout { fill: var(--mint-deep); stroke: var(--ink); stroke-width: 3.5; stroke-linejoin: round; }
+ .m-eye { fill: var(--ink); }
+ .m-shine { fill: var(--white); }
+-.m-cheek { fill: var(--pink); opacity: 0.75; }
+-.m-smile { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
++.m-happy path { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
++.m-happy { opacity: 0; }
++.m-cheek { fill: var(--pink); opacity: 0.8; transition: opacity 250ms ease; }
++.m-smile { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+ .m-wow { fill: var(--ink); opacity: 0; }
+-.m-arm { transform-box: fill-box; transform-origin: 50% 8%; transition: transform 250ms ease; }
+-.m-body { transform-box: fill-box; transform-origin: 50% 100%; animation: bob 3.2s ease-in-out infinite; }
++.m-sparkle { fill: var(--sun); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
++.m-sparkle-2 { fill: var(--pink); }
++.m-sparkles { opacity: 0; transition: opacity 250ms ease; }
++.m-sparkle { transform-box: fill-box; transform-origin: center; }
++
++.m-arm { transform-box: fill-box; transform-origin: 50% 15%; transition: transform 250ms ease; }
++.m-body { transform-box: fill-box; transform-origin: 50% 100%; animation: bob 3.2s ease-in-out infinite; transition: transform 250ms ease; }
++.m-eyes { transform-box: fill-box; transform-origin: center; animation: blink 4.5s infinite; }
+ @keyframes bob { 50% { transform: translateY(-3px); } }
++@keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
++@keyframes twinkle { 50% { transform: scale(0.6) rotate(20deg); } }
++@keyframes wiggle { 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
++@keyframes hop { 50% { transform: translateY(-10px) scale(1.04, 0.97); } }
++
++/* almost there: wide sparkly eyes and a hopeful wiggle */
++.is-close .m-eyes { animation: none; transform: scale(1.15); }
++.is-close .m-body { animation: wiggle 0.9s ease-in-out infinite; }
++.is-close .m-sparkles { opacity: 1; }
++.is-close .m-sparkle { animation: twinkle 0.9s ease-in-out infinite; }
++.is-close .m-cheek { opacity: 1; }
+ 
+-.is-cheer .m-arm-l { transform: rotate(145deg); }
+-.is-cheer .m-arm-r { transform: rotate(-145deg); }
++/* success: arms up, happy ^^ eyes */
++.is-cheer .m-arm-l { transform: rotate(130deg); }
++.is-cheer .m-arm-r { transform: rotate(-130deg); }
+ .is-cheer .m-body { animation: hop 0.45s ease 2; }
+-@keyframes hop { 50% { transform: translateY(-10px) scale(1.04, 0.97); } }
++.is-cheer .m-eyes { opacity: 0; animation: none; }
++.is-cheer .m-happy { opacity: 1; }
++.is-cheer .m-sparkles { opacity: 1; }
++.is-cheer .m-sparkle { animation: twinkle 0.6s ease-in-out 3; }
++
++/* gentle nudge: little "o" mouth and a curious tilt */
+ .is-think .m-smile { opacity: 0; }
+ .is-think .m-wow { opacity: 1; }
++.is-think .m-body { animation: none; transform: rotate(-6deg); }
++
++.bubble.is-pop { animation: pop 0.3s ease; }
++@keyframes pop { 50% { transform: scale(1.04); } }
+ 
+ /* ---------- dialogs ---------- */
+ dialog {
+diff --git a/index.html b/index.html
+index d5c1dde..ab7b826 100644
+--- a/index.html
++++ b/index.html
+@@ -5,7 +5,7 @@
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Signsational</title>
+   <meta name="description" content="Learn the ASL alphabet with your webcam. Free, private, and runs in your browser.">
+-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤟</text></svg>">
++  <link rel="icon" type="image/svg+xml" href="assets/mochi-icon.svg">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&display=swap">
+@@ -16,7 +16,7 @@
+   <a class="skip-link" href="#main">Skip to content</a>
+ 
+   <header class="topbar">
+-    <a class="brand" href="index.html"><span aria-hidden="true">🤟</span> Signsational</a>
++    <a class="brand" href="index.html"><img class="brand-mark" src="assets/mochi-icon.svg" alt="" width="40" height="35"> Signsational</a>
+     <div class="topbar-right">
+       <span class="coins" title="Coins earned">
+         <span aria-hidden="true">🪙</span> <b id="coinDisplay">0</b>
+diff --git a/js/classifier.js b/js/classifier.js
+index e3b4d55..635fece 100644
+--- a/js/classifier.js
++++ b/js/classifier.js
+@@ -37,11 +37,14 @@ export class MLP {
+     return softmax(h);
+   }
+ 
+-  predict(x) {
++  // `target` is optional: when given, also returns how much the model believes it's the target
++  // letter (used for "so close!" encouragement even when another letter is winning).
++  predict(x, target) {
+     const p = this.probabilities(x);
+     let best = 0;
+     for (let i = 1; i < p.length; i++) if (p[i] > p[best]) best = i;
+-    return { label: this.labels[best], conf: p[best] };
++    const t = this.labels.indexOf(target);
++    return { label: this.labels[best], conf: p[best], targetConf: t >= 0 ? p[t] : 0 };
+   }
+ }
+ 
+@@ -54,7 +57,7 @@ export class KNN {
+     this.labels = [...new Set(this.y)].sort();
+   }
+ 
+-  predict(x) {
++  predict(x, target) {
+     const nearest = []; // [distance, index], kept sorted, at most k long
+     for (let n = 0; n < this.X.length; n++) {
+       const row = this.X[n];
+@@ -79,7 +82,8 @@ export class KNN {
+         count = v;
+       }
+     }
+-    return { label, conf: nearest.length ? count / nearest.length : 0 };
++    const n = nearest.length;
++    return { label, conf: n ? count / n : 0, targetConf: n ? (votes[target] || 0) / n : 0 };
+   }
+ }
+ 
+diff --git a/js/game.js b/js/game.js
+index 37c5bca..463cdee 100644
+--- a/js/game.js
++++ b/js/game.js
+@@ -15,13 +15,31 @@ const STRICTNESS = {
+   strict: { conf: 0.85, hold: 18 },
+ };
+ const RING = 2 * Math.PI * 54;
+-const CHEERS = ["You got it!", "Beautiful sign!", "Nailed it!", "So clean!", "Yes! On to the next one."];
++const CHEERS = [
++  "Good job!", "You got it!", "Beautiful sign!", "Nailed it!", "So clean!",
++  "Yes! On to the next one.", "Wow, you're a natural!", "Mochi is so proud of you!",
++];
++// The model is starting to see the target letter.
++const CLOSE = [
++  "Ooh, that's really close!", "So close! Keep going.", "You're right there!",
++  "Almost! Just a tiny tweak.", "Getting warmer!",
++];
++// The ring is more than half full: they just need to hold still.
++const HOLDING = ["Yes! Hold it right there…", "That's it, keep holding!", "Looking great, stay still!"];
+ const NUDGES = [
+-  "Take your time. There's no timer.",
+-  "Try the hint below the letter.",
+-  "Move your hand a little closer to the camera.",
+-  "Almost there. Check your thumb position.",
++  "Good try! Take your time. There's no timer.",
++  "Nice effort! Peek at the hint below the letter.",
++  "Try moving your hand a little closer to the camera.",
++  "You're learning! Check where your thumb is.",
++  "Every try counts. You've got this!",
+ ];
++const SKIPS = ["No worries! We'll come back to it.", "Good call. We'll try that one again later."];
++
++// Mochi's mood -> mascot class. Speech changes at most every MOOD_GAP ms so it doesn't flicker.
++const MOOD_CLASS = { idle: "", close: "is-close", holding: "is-close", nudge: "is-think", cheer: "is-cheer" };
++const MOOD_GAP = 1500;
++// Minimum belief in the target letter that counts as "close", even if another letter is winning.
++const CLOSE_CONF = 0.3;
+ 
+ const $ = (id) => document.getElementById(id);
+ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+@@ -43,6 +61,7 @@ const play = {
+   busy: false, letterStart: 0, lastNudge: 0,
+   mode: "level", // "level" or "word"
+   wordSet: null, wordPos: 0,
++  mood: "idle", moodAt: 0, lastClose: 0,
+ };
+ 
+ function renderMascots() {
+@@ -73,7 +92,22 @@ function setMascot(id, state) {
+ }
+ 
+ function say(text) {
+-  $("playBubble").textContent = text;
++  const bubble = $("playBubble");
++  bubble.textContent = text;
++  bubble.classList.remove("is-pop");
++  void bubble.offsetWidth; // restart the pop animation
++  bubble.classList.add("is-pop");
++}
++
++// Change Mochi's mood (face + speech bubble). `force` skips the anti-flicker delay.
++function setMood(mood, lines, force = false) {
++  const now = performance.now();
++  if (mood === play.mood && !force) return;
++  if (!force && now - play.moodAt < MOOD_GAP) return;
++  play.mood = mood;
++  play.moodAt = now;
++  setMascot("playMascot", MOOD_CLASS[mood]);
++  if (lines) say(typeof lines === "string" ? lines : pick(lines));
+ }
+ 
+ function setRing(fraction) {
+@@ -385,8 +419,9 @@ function showLetter() {
+   img.src = signPath(letter);
+ 
+   setRing(0);
+-  setMascot("playMascot", "");
+-  say(`Show me the letter ${letter}.`);
++  play.mood = "";
++  play.lastClose = 0;
++  setMood("idle", `Show me the letter ${letter}.`, true);
+ }
+ 
+ // ---------- word challenges ----------
+@@ -447,8 +482,9 @@ function showWordLetter() {
+   img.src = signPath(letter);
+ 
+   setRing(0);
+-  setMascot("playMascot", "");
+-  say(`Spell "${word}" \u2014 show me ${letter}.`);
++  play.mood = "";
++  play.lastClose = 0;
++  setMood("idle", `Spell "${word}" \u2014 show me ${letter}.`, true);
+ }
+ 
+ function advanceWord() {
+@@ -508,13 +544,17 @@ function onFrame(lm) {
+     return;
+   }
+ 
+-  const { label, conf } = classifier.predict(toFeatures(lm, aspect, settings.leftHanded));
++  const { label, conf, targetConf } = classifier.predict(toFeatures(lm, aspect, settings.leftHanded), target);
++  const close = label === target || targetConf >= CLOSE_CONF;
+   $("seeing").textContent =
+-    label === target ? `That looks like ${label}. Hold it!` : `Right now that looks like ${label}.`;
++    label === target ? `That's ${label}! Hold it!`
++    : close ? `Close! It's somewhere between ${target} and ${label}.`
++    : `Right now that looks like ${label}.`;
+ 
+   if (label === target && conf >= rule.conf) play.hold += 1;
+   else play.hold = Math.max(0, play.hold - 2);
+-  setRing(play.hold / rule.hold);
++  const filled = play.hold / rule.hold;
++  setRing(filled);
+ 
+   if (play.hold >= rule.hold) {
+     success();
+@@ -522,10 +562,18 @@ function onFrame(lm) {
+   }
+ 
+   const now = performance.now();
+-  if (now - play.letterStart > 12000 && now - play.lastNudge > 9000) {
++  if (close) play.lastClose = now;
++
++  if (filled >= 0.5) {
++    setMood("holding", HOLDING);
++  } else if (close) {
++    setMood("close", CLOSE);
++  } else if (now - play.letterStart > 12000 && now - play.lastNudge > 9000) {
+     play.lastNudge = now;
+-    say(pick(NUDGES));
+-    setMascot("playMascot", "is-think");
++    setMood("nudge", NUDGES, true);
++  } else if (play.mood !== "nudge" && now - play.lastClose > 2500) {
++    // drifted away from the sign: relax Mochi's face, keep the last words up
++    setMood("idle");
+   }
+ }
+ 
+@@ -533,8 +581,7 @@ function success() {
+   play.busy = true;
+   setRing(1);
+   $("target").classList.add("is-hit");
+-  setMascot("playMascot", "is-cheer");
+-  say(pick(CHEERS));
++  setMood("cheer", CHEERS, true);
+   chime();
+   // Schedule the next letter first, so a save error can never stall the game.
+   setTimeout(() => {
+@@ -571,6 +618,7 @@ function skipLetter() {
+       play.queue.push(letter);
+     }
+     advance();
++    if (!play.busy) say(`${pick(SKIPS)} Now show me ${play.queue[play.idx]}.`);
+   }
+ }
+ 
+diff --git a/js/mascot.js b/js/mascot.js
+index 162c141..269fa3b 100644
+--- a/js/mascot.js
++++ b/js/mascot.js
+@@ -1,5 +1,9 @@
+-// Mochi, the cheering mascot. States are CSS classes on the wrapper:
+-// "" (idle), "is-cheer" (arms up, hop), "is-think" (little "o" mouth).
++// Mochi, the cheering mascot: a squishy mint rice cake with big sparkly eyes.
++// States are CSS classes on the wrapper (see setMascot in game.js):
++//   ""          idle: bobs gently and blinks
++//   "is-close"  the learner is almost there: wide eyes, sparkles, little wiggle
++//   "is-cheer"  success: arms up, happy ^^ eyes, hop, sparkles
++//   "is-think"  encouraging nudge: little "o" mouth, head tilt
+ // Accessories are SVG snippets toggled by the shop system.
+ 
+ const ACCESSORIES = {
+@@ -61,29 +65,54 @@ const ACCESSORIES = {
+ const BEHIND = ["cape"];
+ const ON_TOP = ["scarf", "star", "sunglasses", "bow", "partyhat", "flower", "crown"];
+ 
++// Accessories are drawn for the original 120x112 Mochi. FIT maps them onto the bigger,
++// cuter body (180x150); a few get their own fit so they land on the eyes, chin, etc.
++const FIT = "translate(6 4) scale(1.4)";
++const FIT_FOR = {
++  sunglasses: "translate(12.6 8) scale(1.29)",
++  scarf: "translate(6 -6) scale(1.4)",
++  star: "translate(18 -3) scale(1.2)",
++  cape: "translate(-12 4) scale(1.7 1.3)",
++};
++const wear = (id) => `<g transform="${FIT_FOR[id] || FIT}">${ACCESSORIES[id]}</g>`;
++
+ export function mascotSVG(equipped = []) {
+   const has = (id) => equipped.includes(id);
+-  const behind = BEHIND.filter(has).map(id => ACCESSORIES[id]).join("\n    ");
+-  const onTop = ON_TOP.filter(has).map(id => ACCESSORIES[id]).join("\n    ");
++  const behind = BEHIND.filter(has).map(wear).join("\n    ");
++  const onTop = ON_TOP.filter(has).map(wear).join("\n    ");
+ 
+   return `
+-<svg class="mascot" viewBox="0 0 120 112" aria-hidden="true" focusable="false">
+-  <ellipse class="m-shadow" cx="60" cy="106" rx="34" ry="5"/>
++<svg class="mascot" viewBox="0 0 180 150" aria-hidden="true" focusable="false">
++  <ellipse class="m-shadow" cx="90" cy="140" rx="54" ry="6"/>
+   <g class="m-body">
+     ${behind}
+-    <g class="m-arm m-arm-l"><ellipse cx="22" cy="72" rx="9" ry="14"/></g>
+-    <g class="m-arm m-arm-r"><ellipse cx="98" cy="72" rx="9" ry="14"/></g>
+-    <path class="m-blob" d="M60 20c28 0 44 22 44 48 0 22-18 34-44 34S16 90 16 68c0-26 16-48 44-48z"/>
+-    <path class="m-sprout" d="M60 20c-2-9 3-15 11-16-1 8-5 13-11 16z"/>
+-    <circle class="m-eye" cx="46" cy="62" r="5.5"/>
+-    <circle class="m-eye" cx="74" cy="62" r="5.5"/>
+-    <circle class="m-shine" cx="48" cy="60" r="1.8"/>
+-    <circle class="m-shine" cx="76" cy="60" r="1.8"/>
+-    <ellipse class="m-cheek" cx="35" cy="74" rx="6.5" ry="3.5"/>
+-    <ellipse class="m-cheek" cx="85" cy="74" rx="6.5" ry="3.5"/>
+-    <path class="m-mouth m-smile" d="M52 74q8 8 16 0"/>
+-    <ellipse class="m-wow" cx="60" cy="77" rx="4" ry="5"/>
++    <g class="m-arm m-arm-l"><ellipse cx="26" cy="102" rx="9" ry="12"/></g>
++    <g class="m-arm m-arm-r"><ellipse cx="154" cy="102" rx="9" ry="12"/></g>
++    <path class="m-blob" d="M90 32C132 32 156 64 156 94C156 118 128 130 90 130C52 130 24 118 24 94C24 64 48 32 90 32z"/>
++    <path class="m-gloss" d="M54 60C62 48 74 43 84 42"/>
++    <path class="m-sprout" d="M90 33C86 22 76 17 66 19C70 29 80 34 90 33z"/>
++    <path class="m-sprout" d="M90 33C96 20 108 16 118 20C112 31 102 35 90 33z"/>
++    <g class="m-eyes">
++      <ellipse class="m-eye" cx="70" cy="88" rx="7.5" ry="9"/>
++      <ellipse class="m-eye" cx="110" cy="88" rx="7.5" ry="9"/>
++      <circle class="m-shine" cx="72.8" cy="84" r="3"/>
++      <circle class="m-shine" cx="112.8" cy="84" r="3"/>
++      <circle class="m-shine" cx="67.6" cy="92" r="1.4"/>
++      <circle class="m-shine" cx="107.6" cy="92" r="1.4"/>
++    </g>
++    <g class="m-happy">
++      <path d="M62 90q8-10 16 0"/>
++      <path d="M102 90q8-10 16 0"/>
++    </g>
++    <ellipse class="m-cheek" cx="54" cy="102" rx="9.5" ry="5.5"/>
++    <ellipse class="m-cheek" cx="126" cy="102" rx="9.5" ry="5.5"/>
++    <path class="m-mouth m-smile" d="M82 99q4 5.5 8 0q4 5.5 8 0"/>
++    <ellipse class="m-wow" cx="90" cy="102" rx="4" ry="5"/>
+     ${onTop}
+   </g>
++  <g class="m-sparkles">
++    <path class="m-sparkle m-sparkle-1" d="M24 22l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/>
++    <path class="m-sparkle m-sparkle-2" d="M158 30l2.4 5.6 5.6 2.4-5.6 2.4-2.4 5.6-2.4-5.6-5.6-2.4 5.6-2.4z"/>
++  </g>
+ </svg>`;
+ }
+diff --git a/recorder.html b/recorder.html
+index 7fb4967..dbaba27 100644
+--- a/recorder.html
++++ b/recorder.html
+@@ -4,7 +4,7 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Recorder | Signsational</title>
+-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤟</text></svg>">
++  <link rel="icon" type="image/svg+xml" href="assets/mochi-icon.svg">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&display=swap">
+@@ -14,7 +14,7 @@
+   <a class="skip-link" href="#main">Skip to content</a>
+ 
+   <header class="topbar">
+-    <a class="brand" href="index.html"><span aria-hidden="true">🤟</span> Signsational</a>
++    <a class="brand" href="index.html"><img class="brand-mark" src="assets/mochi-icon.svg" alt="" width="40" height="35"> Signsational</a>
+     <div class="topbar-right">
+       <a class="btn btn-quiet" href="index.html">Back to the game</a>
+     </div>
+-- 
+2.43.0
+
