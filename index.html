@@ -31,44 +31,75 @@
   </header>
 
   <main id="main">
-    <!-- Home -->
-    <section id="home" class="screen">
+    <!-- Tab bar -->
+    <nav class="tab-bar" aria-label="Main sections">
+      <button class="tab is-active" data-tab="home" type="button">Home</button>
+      <button class="tab" data-tab="letters" type="button">Letters</button>
+      <button class="tab" data-tab="words" type="button">Words</button>
+      <button class="tab" data-tab="review" type="button">Review</button>
+      <button class="tab" data-tab="shop" type="button">Shop</button>
+    </nav>
+
+    <!-- Home tab -->
+    <section id="tab-home" class="tab-panel">
       <div class="hero">
         <div class="mascot-stage" data-mascot></div>
         <div class="hero-copy">
-          <h1>Learn the ASL alphabet with your webcam</h1>
-          <p class="lede">Hold up a letter and Mochi checks your handshape. Finish a level to earn a sticker. Your video never leaves this device.</p>
-          <button class="btn btn-big" id="continueBtn" type="button">Start practicing</button>
+          <h1>Learn ASL with your webcam</h1>
+          <p class="lede">Hold up a letter and Mochi checks your handshape. Practice daily to keep your streak going. Your video never leaves this device.</p>
+          <button class="btn btn-big" id="continueBtn" type="button">Daily practice</button>
         </div>
       </div>
 
-      <h2 class="section-title">Levels</h2>
-      <ol class="levels" id="levels"></ol>
+      <h2 class="section-title">Sticker book</h2>
+      <ul class="stickers" id="stickerBook"></ul>
 
-      <h2 class="section-title">Word Challenges</h2>
-      <p class="sub-lede">Spell out words letter by letter to earn coins!</p>
+      <p class="model-note" id="modelNote" role="status"></p>
+    </section>
+
+    <!-- Letters tab -->
+    <section id="tab-letters" class="tab-panel" hidden>
+      <h2 class="section-title">Letters</h2>
+      <p class="sub-lede">Tap a letter to practice it. Each letter earns coins the first time!</p>
+      <div class="letter-grid" id="letterGrid"></div>
+    </section>
+
+    <!-- Words tab -->
+    <section id="tab-words" class="tab-panel" hidden>
+      <h2 class="section-title">Spell It Out</h2>
+      <p class="sub-lede">Fingerspell words letter by letter to earn coins!</p>
       <ol class="levels" id="wordLevels"></ol>
 
       <h2 class="section-title" id="signWordsTitle">Sign Words</h2>
       <p class="sub-lede">Learn whole ASL words with movement, like HELLO and THANK YOU.</p>
       <ol class="levels" id="signWords"></ol>
       <p class="sub-lede" id="signNote" role="status"></p>
+    </section>
 
-      <h2 class="section-title">Sticker book</h2>
-      <ul class="stickers" id="stickerBook"></ul>
+    <!-- Review tab -->
+    <section id="tab-review" class="tab-panel" hidden>
+      <h2 class="section-title">Review</h2>
+      <p class="sub-lede">Practice letters and words you've already learned.</p>
 
+      <h3 class="section-subtitle">Completed Letters</h3>
+      <div class="letter-grid" id="reviewLetters"></div>
+
+      <h3 class="section-subtitle">Completed Word Sets</h3>
+      <ol class="levels" id="reviewWords"></ol>
+    </section>
+
+    <!-- Shop tab -->
+    <section id="tab-shop" class="tab-panel" hidden>
       <h2 class="section-title">Mochi's Shop <span class="shop-balance"><img class="coin-icon" src="assets/coin.png" alt="" aria-hidden="true"> <b id="shopCoins">0</b></span></h2>
       <p class="sub-lede">Spend your coins on accessories for Mochi!</p>
       <div class="shop-preview" data-mascot id="shopMascot"></div>
       <div class="shop-grid" id="shopGrid"></div>
-
-      <p class="model-note" id="modelNote" role="status"></p>
     </section>
 
-    <!-- Play -->
+    <!-- Play screen (shared, hidden until a letter/word is started) -->
     <section id="play" class="screen" hidden>
       <div class="play-top">
-        <button class="btn btn-quiet" id="backBtn" type="button">Back to home</button>
+        <button class="btn btn-quiet" id="backBtn" type="button">Back</button>
         <p class="play-meta"><span id="levelLabel"></span>, letter <span id="letterCount"></span></p>
       </div>
 
@@ -125,7 +156,7 @@
     <p id="celebrateText"></p>
     <p class="coin-reward" id="coinReward" hidden></p>
     <div class="dialog-actions">
-      <button class="btn" id="nextLevelBtn" type="button">Next</button>
+      <button class="btn" id="nextLevelBtn" type="button" hidden>Next</button>
       <button class="btn btn-quiet" id="toLevelsBtn" type="button">Back to home</button>
     </div>
   </dialog>

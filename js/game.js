@@ -1,6 +1,6 @@
 import { createHandTracker, startCamera, stopCamera, runLoop, toFeatures, drawHand } from "./hands.js";
 import { loadClassifier } from "./classifier.js";
-import { LEVELS, HINTS, WORD_SETS, SHOP_ITEMS, MOTION_LETTERS } from "./letters.js";
+import { LETTERS, HINTS, WORD_SETS, SHOP_ITEMS, MOTION_LETTERS } from "./letters.js";
 import { NONE, SignBuffer, loadSignClassifier } from "./signs.js";
 import {
   loadSettings, saveSettings, loadProgress, saveProgress, bumpStreak, currentStreak,
@@ -10,6 +10,7 @@ import { mascotSVG, applyFlavor } from "./mascot.js";
 import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud } from "./firebase.js";
 
 const COIN = `<img class="coin-icon" src="assets/coin.png" alt="coins" aria-hidden="true">`;
+const ALL_LETTERS = [...LETTERS, ...MOTION_LETTERS].sort();
 
 // How sure the model must be, and for how many frames in a row (~30 frames = 1 second).
 const STRICTNESS = {
@@ -54,6 +55,10 @@ const MOOD_GAP = 1500;
 // Minimum belief in the target letter that counts as "close", even if another letter is winning.
 const CLOSE_CONF = 0.3;
 
+// Coin rewards
+const LETTER_COINS_FIRST = 10;
+const LETTER_COINS_REPLAY = 2;
+
 const $ = (id) => document.getElementById(id);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -70,12 +75,13 @@ let stream = null;
 let stopLoop = null;
 let aspect = 4 / 3;
 let audioCtx = null;
-let goingToNextLevel = false;
+let activeTab = "home";
+let returnTab = "home";
 
 const play = {
   level: null, queue: [], idx: 0, hold: 0, skipped: new Set(),
   busy: false, letterStart: 0, lastNudge: 0,
-  mode: "level", // "level" or "word"
+  mode: "letter", // "letter" or "word"
   wordSet: null, wordPos: 0,
   mood: "idle", moodAt: 0, lastClose: 0,
 };
@@ -98,10 +104,21 @@ renderMascots();
 // ---------- helpers ----------
 const isMotion = (l) => MOTION_LETTERS.includes(l);
 // Whether the right model has been trained on this letter.
-const knows = (l) => (isMotion(l) ? !!signClassifier && signClassifier.labels.includes(l) : classifier.labels.includes(l));
-const availableLetters = (lv) => (classifier ? lv.letters.filter(knows) : []);
-const isUnlocked = (i) => settings.unlockAll || i === 0 || progress.completed.includes(LEVELS[i - 1].id);
+const knows = (l) => (isMotion(l) ? !!signClassifier && signClassifier.labels.includes(l) : classifier && classifier.labels.includes(l));
 const wordPlayable = (word) => classifier && word.split("").every(knows);
+const letterDone = (l) => (progress.lettersCompleted || []).includes(l);
+
+// Unlock: first 5 letters free, then unlock next 5 after completing 3 from the previous group.
+function letterUnlocked(letter) {
+  if (settings.unlockAll) return true;
+  const idx = ALL_LETTERS.indexOf(letter);
+  if (idx < 5) return true;
+  const groupStart = Math.floor(idx / 5) * 5;
+  const prevGroupStart = groupStart - 5;
+  const prevGroup = ALL_LETTERS.slice(prevGroupStart, groupStart);
+  const completedInPrev = prevGroup.filter(l => letterDone(l)).length;
+  return completedInPrev >= 3;
+}
 
 function currentTarget() {
   if (play.mode === "word") return play.queue[play.idx][play.wordPos];
@@ -114,7 +131,7 @@ function signPath(letter) {
 
 function setMascot(id, state) {
   const el = $(id);
-  el.classList.remove("is-cheer", "is-think");
+  el.classList.remove("is-cheer", "is-think", "is-close");
   if (state) el.classList.add(state);
 }
 
@@ -169,6 +186,30 @@ function applySettings() {
   document.documentElement.classList.toggle("big-text", settings.bigText);
 }
 
+// ---------- tabs ----------
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("is-active", t.dataset.tab === tab));
+  document.querySelectorAll(".tab-panel").forEach(p => p.hidden = p.id !== `tab-${tab}`);
+  $("play").hidden = true;
+  closeCamera();
+  renderTab(tab);
+}
+
+function renderTab(tab) {
+  $("streakCount").textContent = currentStreak(progress);
+  $("coinDisplay").textContent = progress.coins || 0;
+  if (tab === "home") renderHome();
+  else if (tab === "letters") renderLetters();
+  else if (tab === "words") renderWords();
+  else if (tab === "review") renderReview();
+  else if (tab === "shop") renderShop();
+}
+
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+
 // ---------- cloud sync ----------
 function syncToCloud() {
   if (currentUser()) saveToCloud(progress, shop);
@@ -188,6 +229,7 @@ function mergeProgress(local, cloud) {
   if (!cloud) return local;
   return {
     completed: [...new Set([...local.completed, ...(cloud.completed || [])])],
+    lettersCompleted: [...new Set([...(local.lettersCompleted || []), ...(cloud.lettersCompleted || [])])],
     wordsCompleted: [...new Set([...(local.wordsCompleted || []), ...(cloud.wordsCompleted || [])])],
     coins: Math.max(local.coins || 0, cloud.coins || 0),
     streak: (local.lastDay || "") >= (cloud.lastDay || "") ? local.streak : cloud.streak,
@@ -217,48 +259,13 @@ function updateAuthUI(user) {
   }
 }
 
-// ---------- home screen ----------
+// ---------- home tab ----------
 function renderHome() {
-  $("streakCount").textContent = currentStreak(progress);
-  $("coinDisplay").textContent = progress.coins || 0;
-
-  const list = $("levels");
-  list.innerHTML = "";
-  LEVELS.forEach((lv, i) => {
-    const letters = availableLetters(lv);
-    const done = progress.completed.includes(lv.id);
-    const unlocked = isUnlocked(i);
-    const coins = done ? 10 : 50;
-    let status = done ? `${lv.sticker} Done` : unlocked ? "Ready" : "Finish the last level to unlock";
-    if (classifier && letters.length === 0) status = "Not trained yet";
-    else if (classifier && letters.length < lv.letters.length) status += ` (${letters.length} of ${lv.letters.length} letters trained)`;
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "level" + (done ? " is-done" : "") + (unlocked ? "" : " is-locked");
-    btn.disabled = !classifier || !unlocked || letters.length === 0;
-    btn.innerHTML = `
-      <span class="level-num">${lv.id}</span>
-      <span class="level-letters">${lv.letters.join(" ")}</span>
-      <span class="level-status">${status}</span>
-      <span class="level-coins">${COIN} ${coins}</span>`;
-    btn.setAttribute("aria-label", `Level ${lv.id}, letters ${lv.letters.join(", ")}. ${status}`);
-    btn.addEventListener("click", () => startLevel(lv));
-    const li = document.createElement("li");
-    li.append(btn);
-    list.append(li);
-  });
-
-  renderWordChallenges();
-
-  $("stickerBook").innerHTML = LEVELS.map((lv) => {
-    const earned = progress.completed.includes(lv.id);
-    return earned
-      ? `<li class="sticker earned"><span class="disc" aria-hidden="true">${lv.sticker}</span><span class="cap">${lv.stickerName}</span></li>`
-      : `<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">Level ${lv.id}</span></li>`;
-  }).join("");
-
-  renderShop();
+  $("stickerBook").innerHTML = ALL_LETTERS.filter(letterDone).length > 0
+    ? ALL_LETTERS.filter(letterDone).map(l =>
+        `<li class="sticker earned"><span class="disc" aria-hidden="true">${l}</span><span class="cap">${l}</span></li>`
+      ).join("")
+    : '<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">Complete letters to collect!</span></li>';
 
   const note = $("modelNote");
   if (!modelLoaded) note.textContent = "Loading the letter model\u2026";
@@ -275,17 +282,42 @@ function renderHome() {
   $("continueBtn").disabled = !classifier;
 }
 
-function renderWordChallenges() {
+// ---------- letters tab ----------
+function renderLetters() {
+  const grid = $("letterGrid");
+  grid.innerHTML = "";
+  ALL_LETTERS.forEach(letter => {
+    const trained = knows(letter);
+    const done = letterDone(letter);
+    const unlocked = letterUnlocked(letter);
+    const coins = done ? LETTER_COINS_REPLAY : LETTER_COINS_FIRST;
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "letter-card" + (done ? " is-done" : "") + (!unlocked || !trained ? " is-locked" : "");
+    btn.disabled = !trained || !unlocked;
+    btn.innerHTML = `
+      <span class="letter-card-letter">${letter}</span>
+      <span class="letter-card-status">${done ? "Learned" : !trained ? "Not trained" : !unlocked ? "Locked" : "Ready"}</span>
+      <span class="letter-card-coins">${COIN} ${coins}</span>`;
+    btn.setAttribute("aria-label", `Letter ${letter}. ${done ? "Learned" : !unlocked ? "Locked" : "Ready"}`);
+    btn.addEventListener("click", () => { returnTab = "letters"; startSingleLetter(letter); });
+    grid.append(btn);
+  });
+}
+
+// ---------- words tab ----------
+function renderWords() {
   const list = $("wordLevels");
   list.innerHTML = "";
-  const completedCount = progress.completed.length;
+  const hasAnyLetter = (progress.lettersCompleted || []).length > 0;
 
   WORD_SETS.forEach((ws) => {
     const playableWords = classifier ? ws.words.filter((w) => wordPlayable(w)) : [];
     const done = (progress.wordsCompleted || []).includes(ws.id);
-    const unlocked = completedCount >= 1 && playableWords.length > 0;
+    const unlocked = hasAnyLetter && playableWords.length > 0;
     const coins = done ? Math.round(ws.reward / 3) : ws.reward;
-    let status = done ? "Done" : unlocked ? `${playableWords.length} words` : "Complete a letter level first";
+    let status = done ? "Done" : unlocked ? `${playableWords.length} words` : "Complete a letter first";
 
     const btn = document.createElement("button");
     btn.type = "button";
@@ -296,13 +328,58 @@ function renderWordChallenges() {
       <span class="level-letters wl-words">${ws.words.join("  ")}</span>
       <span class="level-status">${status}</span>`;
     btn.setAttribute("aria-label", `${ws.name}: ${ws.words.join(", ")}. ${status}`);
-    btn.addEventListener("click", () => startWordSet(ws));
+    btn.addEventListener("click", () => { returnTab = "words"; startWordSet(ws); });
     const li = document.createElement("li");
     li.append(btn);
     list.append(li);
   });
 }
 
+// ---------- review tab ----------
+function renderReview() {
+  const completed = progress.lettersCompleted || [];
+  const reviewGrid = $("reviewLetters");
+  if (completed.length === 0) {
+    reviewGrid.innerHTML = '<p class="empty-state">No letters completed yet. Head to the Letters tab to start!</p>';
+  } else {
+    reviewGrid.innerHTML = "";
+    completed.sort().forEach(letter => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "letter-card is-done";
+      btn.innerHTML = `
+        <span class="letter-card-letter">${letter}</span>
+        <span class="letter-card-status">Review</span>
+        <span class="letter-card-coins">${COIN} ${LETTER_COINS_REPLAY}</span>`;
+      btn.addEventListener("click", () => { returnTab = "review"; startSingleLetter(letter); });
+      reviewGrid.append(btn);
+    });
+  }
+
+  const wordsDone = progress.wordsCompleted || [];
+  const reviewWordsList = $("reviewWords");
+  if (wordsDone.length === 0) {
+    reviewWordsList.innerHTML = '<li class="empty-state">No word sets completed yet.</li>';
+  } else {
+    reviewWordsList.innerHTML = "";
+    WORD_SETS.filter(ws => wordsDone.includes(ws.id)).forEach(ws => {
+      const coins = Math.round(ws.reward / 3);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "level word-level is-done";
+      btn.innerHTML = `
+        <span class="level-num wl-reward">${COIN}${coins}</span>
+        <span class="level-letters wl-words">${ws.words.join("  ")}</span>
+        <span class="level-status">Review</span>`;
+      btn.addEventListener("click", () => { returnTab = "review"; startWordSet(ws); });
+      const li = document.createElement("li");
+      li.append(btn);
+      reviewWordsList.append(li);
+    });
+  }
+}
+
+// ---------- shop tab ----------
 function renderShop() {
   $("shopCoins").textContent = progress.coins || 0;
   const grid = $("shopGrid");
@@ -335,7 +412,6 @@ function handleShopClick(itemId) {
   if (!item) return;
 
   if (shop.owned.includes(itemId)) {
-    // Toggle equip/unequip
     if (shop.equipped.includes(itemId)) {
       shop.equipped = shop.equipped.filter((id) => id !== itemId);
     } else {
@@ -345,7 +421,6 @@ function handleShopClick(itemId) {
     renderMascots();
     renderShop();
   } else if ((progress.coins || 0) >= item.price) {
-    // Buy and auto-equip
     progress.coins -= item.price;
     persistProgress();
     shop.owned.push(itemId);
@@ -357,18 +432,29 @@ function handleShopClick(itemId) {
   }
 }
 
-function nextLevelToPlay() {
-  const playable = LEVELS.filter((lv, i) => isUnlocked(i) && availableLetters(lv).length);
-  return playable.find((lv) => !progress.completed.includes(lv.id)) || playable[0];
-}
-
+// ---------- navigation ----------
 function goHome() {
   closeCamera();
   $("play").hidden = true;
-  $("home").hidden = false;
   $("wordDisplay").hidden = true;
-  play.mode = "level";
-  renderHome();
+  play.mode = "letter";
+  switchTab(returnTab);
+}
+
+// Daily practice: pick the next unlearned letter, or a random one to review.
+function dailyPractice() {
+  const next = ALL_LETTERS.find(l => knows(l) && letterUnlocked(l) && !letterDone(l));
+  if (next) {
+    returnTab = "home";
+    startSingleLetter(next);
+  } else {
+    // All done — review a random learned letter
+    const learned = ALL_LETTERS.filter(l => knows(l) && letterDone(l));
+    if (learned.length) {
+      returnTab = "home";
+      startSingleLetter(pick(learned));
+    }
+  }
 }
 
 // ---------- camera ----------
@@ -388,7 +474,6 @@ async function openCamera() {
     return;
   }
   if ($("play").hidden) {
-    // learner left the level while the camera was starting
     stopCamera(stream);
     stream = null;
     return;
@@ -408,17 +493,16 @@ function closeCamera() {
   stream = null;
 }
 
-// ---------- playing a level ----------
-async function startLevel(lv) {
-  play.mode = "level";
-  play.level = lv;
-  play.queue = availableLetters(lv);
+// ---------- playing a single letter ----------
+async function startSingleLetter(letter) {
+  play.mode = "letter";
+  play.queue = [letter];
   play.idx = 0;
   play.skipped = new Set();
-  $("home").hidden = true;
+  document.querySelectorAll(".tab-panel").forEach(p => p.hidden = true);
   $("play").hidden = false;
   $("wordDisplay").hidden = true;
-  $("levelLabel").textContent = `Level ${lv.id}`;
+  $("levelLabel").textContent = `Letter ${letter}`;
   window.scrollTo(0, 0);
   showLetter();
   if (!stream) await openCamera();
@@ -437,7 +521,6 @@ function showLetter() {
   $("hint").textContent = HINTS[letter] || "";
   $("seeing").textContent = "";
 
-  // Optional reference photo: assets/signs/A.jpg, B.jpg, ...
   const img = $("signImg");
   $("signRef").hidden = true;
   img.onload = () => ($("signRef").hidden = false);
@@ -459,7 +542,7 @@ async function startWordSet(ws) {
   play.idx = 0;
   play.wordPos = 0;
   play.skipped = new Set();
-  $("home").hidden = true;
+  document.querySelectorAll(".tab-panel").forEach(p => p.hidden = true);
   $("play").hidden = false;
   $("wordDisplay").hidden = false;
   $("levelLabel").textContent = ws.name;
@@ -598,7 +681,7 @@ function onMotionFrame(lm, target) {
   signBuffer.push(now, lm, aspect, settings.leftHanded);
   if (++frameNo % PREDICT_EVERY) return;
   const clip = signBuffer.clip(now);
-  if (!clip) return; // still filling up the last 0.8 seconds
+  if (!clip) return;
 
   const rule = MOTION_STRICTNESS[settings.strictness] || MOTION_STRICTNESS.normal;
   const { label, conf, targetConf } = signClassifier.predict(clip, target);
@@ -632,7 +715,6 @@ function updateProgress(filled, close, almost) {
     play.lastNudge = now;
     setMood("nudge", NUDGES, true);
   } else if (play.mood !== "nudge" && now - play.lastClose > 2500) {
-    // drifted away from the sign: relax Mochi's face, keep the last words up
     setMood("idle");
   }
 }
@@ -643,7 +725,6 @@ function success() {
   $("target").classList.add("is-hit");
   setMood("cheer", CHEERS, true);
   chime();
-  // Schedule the next letter first, so a save error can never stall the game.
   setTimeout(() => {
     $("target").classList.remove("is-hit");
     if (play.mode === "word") advanceWord();
@@ -656,7 +737,7 @@ function success() {
 
 function advance() {
   play.idx += 1;
-  if (play.idx >= play.queue.length) finishLevel();
+  if (play.idx >= play.queue.length) finishLetter();
   else showLetter();
 }
 
@@ -672,37 +753,33 @@ function skipLetter() {
     if (play.idx >= play.queue.length) finishWordSet();
     else showWord();
   } else {
-    const letter = play.queue[play.idx];
-    if (!play.skipped.has(letter)) {
-      play.skipped.add(letter);
-      play.queue.push(letter);
-    }
-    advance();
-    if (!play.busy) say(`${pick(SKIPS)} Now show me ${play.queue[play.idx]}.`);
+    // For single letters, just go back
+    goHome();
   }
 }
 
-function finishLevel() {
+function finishLetter() {
   play.busy = true;
   closeCamera();
-  const lv = play.level;
-  const firstTime = !progress.completed.includes(lv.id);
-  const coins = firstTime ? 50 : 10;
+  const letter = play.queue[0];
+  const firstTime = !letterDone(letter);
+  const coins = firstTime ? LETTER_COINS_FIRST : LETTER_COINS_REPLAY;
 
-  if (firstTime) progress.completed.push(lv.id);
+  if (firstTime) {
+    if (!progress.lettersCompleted) progress.lettersCompleted = [];
+    progress.lettersCompleted.push(letter);
+  }
   progress.coins = (progress.coins || 0) + coins;
   persistProgress();
 
-  $("bigSticker").textContent = lv.sticker;
-  $("celebrateTitle").textContent = firstTime ? `You earned the ${lv.stickerName} sticker!` : `Level ${lv.id} complete!`;
+  $("bigSticker").textContent = letter;
+  $("celebrateTitle").textContent = firstTime ? `You learned the letter ${letter}!` : `Nice review of ${letter}!`;
   $("celebrateText").textContent = firstTime
-    ? "It's in your sticker book now."
-    : "Nice review. Practice keeps the handshapes fresh.";
+    ? "Keep going to unlock more letters."
+    : "Practice makes perfect!";
   $("coinReward").textContent = `+${coins} coins`;
   $("coinReward").hidden = false;
-
-  const next = LEVELS[LEVELS.indexOf(lv) + 1];
-  $("nextLevelBtn").hidden = !(next && availableLetters(next).length);
+  $("nextLevelBtn").hidden = true;
   confetti();
   $("celebrate").showModal();
 }
@@ -711,9 +788,7 @@ function confetti() {
   const box = $("confetti");
   box.innerHTML = "";
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const bits = play.mode === "word"
-    ? ["\u2728", "\uD83D\uDC9C", "\uD83D\uDC9B", "\u2728", "\uD83D\uDC9B"]
-    : ["\u2728", "\uD83D\uDC9C", "\uD83D\uDC9B", "\uD83C\uDF38", play.level.sticker];
+  const bits = ["\u2728", "\uD83D\uDC9C", "\uD83D\uDC9B", "\uD83C\uDF38", "\u2728"];
   for (let i = 0; i < 26; i++) {
     const s = document.createElement("span");
     s.textContent = pick(bits);
@@ -747,14 +822,11 @@ function updateSettings() {
   applySettings();
   const current = play.queue[play.idx];
   if (!$("play").hidden && current) $("signImg").src = signPath(current);
-  if (!$("home").hidden) renderHome();
+  renderTab(activeTab);
 }
 
 // ---------- wiring ----------
-$("continueBtn").addEventListener("click", () => {
-  const lv = nextLevelToPlay();
-  if (lv) startLevel(lv);
-});
+$("continueBtn").addEventListener("click", dailyPractice);
 $("backBtn").addEventListener("click", goHome);
 $("skipBtn").addEventListener("click", skipLetter);
 $("settingsBtn").addEventListener("click", openSettings);
@@ -770,22 +842,15 @@ $("authBtn").addEventListener("click", async () => {
 $("settingsDone").addEventListener("click", () => $("settings").close());
 $("settings").addEventListener("change", updateSettings);
 
-$("nextLevelBtn").addEventListener("click", () => {
-  goingToNextLevel = true;
-  $("celebrate").close();
-  const next = LEVELS[LEVELS.indexOf(play.level) + 1];
-  startLevel(next);
-});
 $("toLevelsBtn").addEventListener("click", () => $("celebrate").close());
 $("celebrate").addEventListener("close", () => {
   $("coinReward").hidden = true;
-  if (!goingToNextLevel) goHome();
-  goingToNextLevel = false;
+  goHome();
 });
 
 (async function init() {
   applySettings();
-  renderHome();
+  switchTab("home");
 
   onAuthChange(async (user) => {
     updateAuthUI(user);
@@ -799,11 +864,11 @@ $("celebrate").addEventListener("close", () => {
       }
       syncToCloud();
       renderMascots();
-      renderHome();
+      renderTab(activeTab);
     }
   });
 
   [classifier, signClassifier] = await Promise.all([loadClassifier(), loadSignClassifier()]);
   modelLoaded = true;
-  renderHome();
+  renderTab(activeTab);
 })();

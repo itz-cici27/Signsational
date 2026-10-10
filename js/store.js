@@ -29,7 +29,7 @@ export const DEFAULT_SETTINGS = {
 export const loadSettings = () => ({ ...DEFAULT_SETTINGS, ...getItem("sls_settings", {}) });
 export const saveSettings = (s) => setItem("sls_settings", s);
 
-export const loadProgress = () => ({ completed: [], streak: 0, lastDay: null, coins: 0, wordsCompleted: [], ...getItem("sls_progress", {}) });
+export const loadProgress = () => ({ completed: [], lettersCompleted: [], streak: 0, lastDay: null, coins: 0, wordsCompleted: [], ...getItem("sls_progress", {}) });
 export const saveProgress = (p) => setItem("sls_progress", p);
 
 export const loadShop = () => ({ owned: [], equipped: [], flavor: "matcha", ...getItem("sls_shop", {}) });
