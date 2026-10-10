@@ -475,12 +475,12 @@ function renderReview() {
       reviewWordGrid.append(btn);
     });
     // Sign words (HELLO, PLEASE, ...) are played on their own page.
-    completedSigns.forEach(({ word, emoji }) => {
+    completedSigns.forEach(({ word }) => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "word-card is-done";
       btn.innerHTML = `
-        <span class="word-card-word"><span aria-hidden="true">${emoji}</span> ${word}</span>
+        <span class="word-card-word">${word}</span>
         <span class="word-card-status">Sign word</span>
         <span class="word-card-coins">${COIN} ${signRewards(true)}</span>`;
       btn.addEventListener("click", () => (location.href = signPageUrl([word])));
@@ -515,19 +515,23 @@ function rankTiers(keys, stats) {
 }
 
 // Draws one row of piles. face(key) is what's printed on that key's card.
-function renderTiers(list, tiers, stats, { face, start, unit, names = false }) {
+function renderTiers(list, tiers, stats, { face, start, unit, words = false }) {
   list.innerHTML = "";
   tiers.forEach(({ id, label, blurb, keys }) => {
     const times = keys.map((k) => stats[k].avgTime).filter(Boolean);
     const avg = times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0;
     const meta = `${keys.length} ${unit}${keys.length === 1 ? "" : "s"} \u00B7 ${avg ? `${avg.toFixed(1)}s avg` : "skipped so far"}`;
 
-    // A pile of cards, worst on top: the easiest is at the back (left) and the hardest
-    // is the front card. Bigger piles overlap more so they still fit.
+    // A pile of cards, worst on top. Letters fan out sideways: the easiest is at the back
+    // (left) and the hardest is the front card; bigger piles overlap more so they still fit.
+    // Words are too long for that, so they stack downwards with the hardest at the top.
     const step = keys.length <= 5 ? 40 : Math.max(20, Math.floor(165 / (keys.length - 1)));
-    const cards = [...keys].reverse()
-      .map((k, i) => `<span class="deck-card${i === keys.length - 1 ? " is-top" : ""}" style="--i:${i}">${face(k)}</span>`)
+    const order = words ? keys : [...keys].reverse();
+    const topIdx = words ? 0 : keys.length - 1;
+    const cards = order
+      .map((k, i) => `<span class="deck-card${i === topIdx ? " is-top" : ""}" style="--i:${i}">${face(k)}</span>`)
       .join("");
+    const pileClass = words ? " is-words" : keys.length > 6 ? " is-crowded" : "";
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = `deck deck-${id}`;
@@ -536,8 +540,7 @@ function renderTiers(list, tiers, stats, { face, start, unit, names = false }) {
         <span class="deck-label">${label}</span>
         <span class="deck-blurb">${blurb}</span>
       </span>
-      <span class="deck-cards${keys.length > 6 ? " is-crowded" : ""}" style="--n:${keys.length};--step:${step}px" aria-hidden="true">${cards}</span>
-      ${names ? `<span class="deck-names">${keys.join(" \u00B7 ")}</span>` : ""}
+      <span class="deck-cards${pileClass}" style="--n:${keys.length};--step:${step}px" aria-hidden="true">${cards}</span>
       <span class="deck-foot">
         <span class="deck-meta">${meta}</span>
         <span class="deck-go" aria-hidden="true">Practice \u2192</span>
@@ -555,7 +558,6 @@ function renderTiers(list, tiers, stats, { face, start, unit, names = false }) {
 function renderSlowestStacks() {
   const letters = (progress.lettersCompleted || []).filter(knows);
   const signs = SIGN_WORDS.filter((s) => (progress.signsCompleted || []).includes(s.word));
-  const emoji = Object.fromEntries(signs.map((s) => [s.word, s.emoji]));
   const shown =
     renderTiers($("letterTiers"), rankTiers(letters, progress.stats), progress.stats, {
       face: (l) => `<b>${l}</b>`,
@@ -563,10 +565,10 @@ function renderSlowestStacks() {
       unit: "letter",
     }) +
     renderTiers($("signTiers"), rankTiers(signs.map((s) => s.word), progress.signStats), progress.signStats, {
-      face: (w) => `<span class="deck-emoji">${emoji[w]}</span>`,
+      face: (w) => w,
       start: (words) => (location.href = signPageUrl(words)),
       unit: "sign",
-      names: true,
+      words: true,
     });
   $("reviewStacks").hidden = !shown;
 }

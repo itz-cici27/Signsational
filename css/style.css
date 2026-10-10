@@ -1069,8 +1069,27 @@ body.garden-bg::before {
 .deck-card b { font-family: var(--display); font-weight: 700; font-size: 1.5rem; line-height: 1; }
 .deck-cards.is-crowded .deck-card { padding-left: 5px; }
 .deck-cards.is-crowded .deck-card b { font-size: 1.2rem; }
-.deck-emoji { display: block; font-size: 2rem; line-height: 1; margin: 2px 0 0 -2px; }
-.deck-names { font-family: var(--display); font-weight: 600; font-size: 0.95rem; letter-spacing: 0.03em; }
+/* sign word piles: word cards stacked downwards, hardest on top */
+.deck-cards.is-words { display: grid; justify-items: start; align-content: start; height: auto; width: auto; margin: 0.2rem 0 0.1rem; }
+.deck-cards.is-words .deck-card {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: auto;
+  height: auto;
+  min-width: 7.5rem;
+  margin-top: -6px;
+  padding: 0.45rem 0.9rem;
+  z-index: calc(20 - var(--i));
+  transform: rotate(-1.2deg);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+.deck-cards.is-words .deck-card:first-child { margin-top: 0; }
+.deck-cards.is-words .deck-card:nth-child(even) { transform: rotate(1.2deg); }
+.deck:hover .deck-cards.is-words .deck-card.is-top { transform: rotate(-1.2deg) translateY(-3px); }
 .tier-group + .tier-group { margin-top: 1.5rem; }
 .tier-group-title { margin: 0 0 0.6rem; font-family: var(--display); font-weight: 600; font-size: 1rem; color: var(--muted); }
 .deck-card.is-top { border-color: var(--accent); box-shadow: 0 3px 0 var(--accent); }
@@ -1081,4 +1100,5 @@ body.garden-bg::before {
   .deck, .deck-card { transition: none; }
   .deck:hover { transform: none; }
   .deck:hover .deck-card.is-top { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg)); }
+  .deck:hover .deck-cards.is-words .deck-card.is-top { transform: rotate(-1.2deg); }
 }
