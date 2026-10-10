@@ -35,15 +35,19 @@ Uses leave-one-signer-out cross-validation when multiple signers' data is presen
 **Key modules:**
 - `js/hands.js` — MediaPipe Hand Landmarker setup, camera, feature extraction (21 landmarks → 63 floats centered on wrist, scaled by palm size), hand skeleton drawing
 - `js/classifier.js` — MLP and kNN classifiers, `loadClassifier()` entry point
-- `js/game.js` — game loop, level progression, settings, streaks. Entry point for `index.html`
+- `js/game.js` — game loop, level progression, word challenges, coin system, shop, settings, streaks. Entry point for `index.html`
 - `js/recorder.js` — data collection UI, CSV import/export. Entry point for `recorder.html`
-- `js/store.js` — localStorage wrapper for settings, progress, and samples
-- `js/letters.js` — letter definitions, level structure (5 levels), handshape hints
-- `js/mascot.js` — Mochi SVG mascot (inline SVG, animated via CSS classes)
+- `js/store.js` — localStorage wrapper for settings, progress, shop inventory, and samples
+- `js/letters.js` — letter definitions, level structure (5 levels), word challenge sets, shop item catalog, handshape hints
+- `js/mascot.js` — Mochi SVG mascot with equippable accessories (inline SVG, animated via CSS classes)
 
 **Feature vector:** 63 floats = 21 landmarks × 3 coords (x, y, z), centered on wrist, normalized by palm size. Left-handed input is mirrored to match right-handed training data.
 
 **Letters covered:** A–Y excluding J and Z (which require motion). 24 static letters across 5 levels.
+
+**Word challenges:** 4 word sets where users fingerspell complete words letter by letter (e.g. CAT → sign C, then A, then T). Uses the same classifier — no motion recognition needed.
+
+**Coin & shop system:** Coins earned from completing levels (50 first time, 10 replay) and word challenges (30–65 based on difficulty). Spent in Mochi's Shop on SVG accessories (bow, sunglasses, crown, cape, etc.) that render on the mascot. Shop state stored in `sls_shop` localStorage key.
 
 ## Important conventions
 

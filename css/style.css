@@ -394,6 +394,134 @@ legend { font-weight: 700; padding: 0 0.4rem; }
 .tips ul { padding-left: 1.2rem; margin: 0.5rem 0 0; }
 .tips li { margin-bottom: 0.4rem; }
 
+/* ---------- coins ---------- */
+.coins {
+  font-family: var(--display);
+  font-weight: 600;
+  background: var(--sun);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  white-space: nowrap;
+}
+.level-coins {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.level.is-done .level-coins { color: var(--ink); }
+
+/* ---------- word display ---------- */
+.word-display {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.word-letter {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.8rem;
+  width: 2.4rem;
+  height: 2.8rem;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--muted);
+  transition: transform 150ms ease, background 150ms ease;
+}
+.word-letter.is-current {
+  border-color: var(--ink);
+  background: var(--sun);
+  color: var(--ink);
+  transform: scale(1.1);
+}
+.word-letter.is-done {
+  background: var(--mint);
+  border-color: var(--mint-deep);
+  color: var(--mint-deep);
+}
+
+.sub-lede {
+  color: var(--muted);
+  margin: 0 0 1rem;
+}
+
+/* ---------- word level buttons ---------- */
+.wl-reward {
+  font-size: 1.6rem !important;
+}
+.wl-words {
+  font-size: 0.95rem !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* ---------- shop ---------- */
+.shop-balance {
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--sun);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  vertical-align: middle;
+}
+.shop-preview {
+  width: 160px;
+  margin: 0 auto 1.5rem;
+}
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+.shop-item {
+  text-align: center;
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 20px;
+  padding: 1rem 0.8rem;
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+  display: grid;
+  gap: 0.3rem;
+  justify-items: center;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.shop-item:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.shop-item:disabled { opacity: 0.45; cursor: not-allowed; }
+.shop-emoji { font-size: 2.2rem; }
+.shop-name { font-family: var(--display); font-weight: 600; font-size: 1.05rem; }
+.shop-desc { font-size: 0.85rem; color: var(--muted); }
+.shop-action {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: var(--sun);
+  border-radius: 999px;
+  padding: 0.25rem 0.8rem;
+  margin-top: 0.3rem;
+}
+.shop-item.is-equipped .shop-action { background: var(--mint); }
+.shop-item.is-owned .shop-action { background: var(--paper); }
+.shop-item.is-expensive .shop-action { background: var(--paper); color: var(--muted); }
+
+/* ---------- coin reward ---------- */
+.coin-reward {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--ink);
+  background: var(--sun);
+  border-radius: 999px;
+  padding: 0.3rem 1rem;
+  display: inline-block;
+  margin: 0.5rem 0 0;
+}
+
 .foot { text-align: center; padding: 1.5rem; }
 .foot a { color: var(--muted); }
 

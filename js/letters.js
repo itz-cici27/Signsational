@@ -35,3 +35,22 @@ export const HINTS = {
   X: "Raise your index finger and bend it into a hook. Keep the other fingers closed.",
   Y: "Stretch out your thumb and pinky. Fold the middle three fingers down.",
 };
+
+// Word fingerspelling challenges. All letters must be in LETTERS (no J or Z).
+export const WORD_SETS = [
+  { id: "w1", name: "First Words", reward: 30, words: ["CAT", "DOG", "SUN", "CUP", "BIG", "RED"] },
+  { id: "w2", name: "Animal Friends", reward: 40, words: ["FISH", "BIRD", "FROG", "DUCK", "BEAR"] },
+  { id: "w3", name: "Dream Big", reward: 50, words: ["SMILE", "LIGHT", "MUSIC", "WATER", "DREAM"] },
+  { id: "w4", name: "Super Speller", reward: 65, words: ["PURPLE", "BRIGHT", "BASKET", "SIMPLE"] },
+];
+
+export const SHOP_ITEMS = [
+  { id: "bow", name: "Pink Bow", price: 50, emoji: "\u{1F380}", description: "A cute bow for Mochi" },
+  { id: "star", name: "Star Badge", price: 60, emoji: "\u2B50", description: "A shiny badge of honor" },
+  { id: "sunglasses", name: "Cool Shades", price: 75, emoji: "\u{1F576}\uFE0F", description: "Looking cool!" },
+  { id: "scarf", name: "Cozy Scarf", price: 80, emoji: "\u{1F9E3}", description: "Warm and stylish" },
+  { id: "partyhat", name: "Party Hat", price: 100, emoji: "\u{1F389}", description: "Time to celebrate!" },
+  { id: "flower", name: "Flower Crown", price: 120, emoji: "\u{1F33A}", description: "A crown of flowers" },
+  { id: "crown", name: "Royal Crown", price: 150, emoji: "\u{1F451}", description: "Fit for royalty" },
+  { id: "cape", name: "Hero Cape", price: 200, emoji: "\u{1F9B8}", description: "Every hero needs a cape" },
+];

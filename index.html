@@ -17,6 +17,9 @@
   <header class="topbar">
     <a class="brand" href="index.html"><span aria-hidden="true">🤟</span> Signsational</a>
     <div class="topbar-right">
+      <span class="coins" title="Coins earned">
+        <span aria-hidden="true">🪙</span> <b id="coinDisplay">0</b>
+      </span>
       <span class="streak" title="Days practiced in a row">
         <span aria-hidden="true">🔥</span> <b id="streakCount">0</b> <span class="streak-label">day streak</span>
       </span>
@@ -39,8 +42,17 @@
       <h2 class="section-title">Levels</h2>
       <ol class="levels" id="levels"></ol>
 
+      <h2 class="section-title">Word Challenges</h2>
+      <p class="sub-lede">Spell out words letter by letter to earn coins!</p>
+      <ol class="levels" id="wordLevels"></ol>
+
       <h2 class="section-title">Sticker book</h2>
       <ul class="stickers" id="stickerBook"></ul>
+
+      <h2 class="section-title">Mochi's Shop <span class="shop-balance">🪙 <b id="shopCoins">0</b></span></h2>
+      <p class="sub-lede">Spend your coins on accessories for Mochi!</p>
+      <div class="shop-preview" data-mascot id="shopMascot"></div>
+      <div class="shop-grid" id="shopGrid"></div>
 
       <p class="model-note" id="modelNote" role="status"></p>
     </section>
@@ -60,6 +72,7 @@
         </div>
 
         <div class="panel">
+          <div class="word-display" id="wordDisplay" hidden></div>
           <div class="target" id="target">
             <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
               <circle class="ring-bg" cx="60" cy="60" r="54"/>
@@ -102,6 +115,7 @@
     <p class="big-sticker" id="bigSticker" aria-hidden="true"></p>
     <h2 id="celebrateTitle"></h2>
     <p id="celebrateText"></p>
+    <p class="coin-reward" id="coinReward" hidden></p>
     <div class="dialog-actions">
       <button class="btn" id="nextLevelBtn" type="button">Next level</button>
       <button class="btn btn-quiet" id="toLevelsBtn" type="button">Back to levels</button>
