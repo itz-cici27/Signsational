@@ -985,51 +985,96 @@ body.garden-bg::before {
   .garden-bg main { padding: 0.5rem 1rem 1.5rem; border-radius: 24px; }
 }
 
-/* Practice Stats & Badges */
-.needs-practice-tag {
-  display: block;
-  font-size: 0.65rem;
-  background: #ff5252;
-  color: #ffffff;
-  padding: 2px 6px;
-  border-radius: 8px;
-  margin-top: 4px;
-  font-weight: bold;
-}
+/* Review: letters that need practice (see difficulty() in js/game.js) */
+.letter-card.is-done.needs-practice { background: var(--sun); }
+.letter-card.needs-practice .letter-card-status { color: var(--danger); font-weight: 700; }
+.letter-card-time { font-size: 0.8rem; font-weight: 700; color: var(--ink); }
 
-.letter-card.needs-practice {
-  border: 2px solid #ff5252;
-}
-
-/* ---------- review practice stacks ---------- */
+/* ---------- review: letters sorted worst to best ---------- */
 .review-stacks { margin: 0 0 2rem; }
 .review-stacks-note { margin: 0.25rem 0 1.25rem; color: var(--muted); max-width: 60ch; }
-.review-stack-list { list-style: none; padding: 0 1rem 1rem 0; margin: 0; display: flex; flex-wrap: wrap; gap: 2rem; }
-.review-stack {
+.deck-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: grid;
-  gap: 0.35rem;
-  min-width: 200px;
-  padding: 0.9rem 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+.deck {
+  --tint: var(--white);
+  --accent: var(--ink);
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem 0.9rem;
   text-align: left;
   font: inherit;
   color: var(--ink);
+  background: var(--tint);
+  border: 3px solid var(--ink);
+  border-radius: 24px;
+  box-shadow: 0 5px 0 var(--ink);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.deck:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--ink); }
+.deck:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
+.deck:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.deck-worst { --tint: #FFE3EE; --accent: var(--danger); }
+.deck-medium { --tint: #FFF4CC; --accent: #9A6B00; }
+.deck-best { --tint: #DDF7EC; --accent: #1E7A57; }
+
+.deck-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+.deck-label {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--white);
+  background: var(--accent);
+  padding: 0.15rem 0.75rem;
+  border-radius: 999px;
+}
+.deck-blurb { font-size: 0.85rem; color: var(--muted); }
+.deck-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.deck-meta { font-size: 0.9rem; color: var(--muted); }
+.deck-go { font-family: var(--display); font-weight: 600; font-size: 0.9rem; color: var(--accent); }
+
+/* the pile of cards: the front card is the hardest letter */
+.deck-cards {
+  position: relative;
+  display: block;
+  height: 92px;
+  width: calc(64px + (var(--n) - 1) * var(--step));
+  margin: 0.2rem 0 0.1rem 0.25rem;
+}
+.deck-card {
+  position: absolute;
+  bottom: 0;
+  left: calc(var(--i) * var(--step));
+  z-index: var(--i);
+  width: 64px;
+  height: 80px;
+  padding: 6px 0 0 8px;
   background: var(--white);
   border: 3px solid var(--ink);
-  border-radius: 20px;
-  cursor: pointer;
-  /* two more "cards" peeking out underneath, so it reads as a stack */
-  box-shadow:
-    7px 7px 0 -1px var(--white), 7px 7px 0 2px var(--ink),
-    14px 14px 0 -1px var(--white), 14px 14px 0 2px var(--ink);
-  transition: transform 80ms ease, box-shadow 80ms ease;
+  border-radius: 12px;
+  box-shadow: 0 3px 0 var(--ink);
+  transform-origin: 50% 100%;
+  transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg));
+  transition: transform 160ms ease;
 }
-.review-stack:active {
-  transform: translate(4px, 4px);
-  box-shadow:
-    3px 3px 0 -1px var(--white), 3px 3px 0 2px var(--ink),
-    6px 6px 0 -1px var(--white), 6px 6px 0 2px var(--ink);
+.deck-card b { font-family: var(--display); font-weight: 700; font-size: 1.5rem; line-height: 1; }
+.deck-cards.is-crowded .deck-card { padding-left: 5px; }
+.deck-cards.is-crowded .deck-card b { font-size: 1.2rem; }
+.deck-card.is-top { border-color: var(--accent); box-shadow: 0 3px 0 var(--accent); }
+.deck-card.is-top b { color: var(--accent); }
+.deck:hover .deck-card.is-top { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg)) translateY(-6px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .deck, .deck-card { transition: none; }
+  .deck:hover { transform: none; }
+  .deck:hover .deck-card.is-top { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg)); }
 }
-.stack-rank { font-weight: 700; font-size: 0.85rem; color: var(--muted); }
-.review-stack.is-slowest .stack-rank { color: var(--danger); }
-.stack-letters { display: flex; flex-wrap: wrap; gap: 0.15rem 0.5rem; font-family: var(--display); font-weight: 700; font-size: 1.7rem; line-height: 1.2; }
-.stack-meta { font-size: 0.9rem; color: var(--muted); }

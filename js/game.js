@@ -260,6 +260,15 @@ function persistShop() {
   syncToCloud();
 }
 
+// Practice stats from two devices: for each letter, keep whichever has more attempts.
+function mergeStats(a, b) {
+  const out = { ...(b || {}) };
+  for (const [letter, s] of Object.entries(a || {})) {
+    if (!out[letter] || (s.attempts || 0) >= (out[letter].attempts || 0)) out[letter] = s;
+  }
+  return out;
+}
+
 function mergeProgress(local, cloud) {
   if (!cloud) return local;
   return {
@@ -269,6 +278,7 @@ function mergeProgress(local, cloud) {
     signsCompleted: [...new Set([...(local.signsCompleted || []), ...(cloud.signsCompleted || [])])],
     wordsSigned: Math.max(local.wordsSigned || 0, cloud.wordsSigned || 0),
     coins: Math.max(local.coins || 0, cloud.coins || 0),
+    stats: mergeStats(local.stats, cloud.stats),
     streak: (local.lastDay || "") >= (cloud.lastDay || "") ? local.streak : cloud.streak,
     lastDay: (local.lastDay || "") >= (cloud.lastDay || "") ? local.lastDay : cloud.lastDay,
   };
@@ -298,19 +308,14 @@ function updateAuthUI(user) {
 
 // ---------- home tab ----------
 function renderHome() {
-  const stats = progress.stats || {};
-
-  $("stickerBook").innerHTML = ALL_LETTERS.filter(letterDone).length > 0
-    ? ALL_LETTERS.filter(letterDone).map(l => {
-        const needsPractice = (stats[l]?.score || 0) > 8 || (stats[l]?.skips || 0) > 0;
-        const badge = needsPractice ? `<span class="needs-practice-tag">Needs Practice</span>` : "";
-        return `<li class="sticker earned">
-                  <span class="disc" aria-hidden="true">${l}</span>
-                  <span class="cap">${l}</span>
-                  ${badge}
-                </li>`;
-      }).join("")
-    : '<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">Complete letters to collect!</span></li>';
+  // Achievement stickers (see js/stickers.js), in the player's Mochi flavor.
+  const stats = stickerStats(progress);
+  const earnedCount = STICKERS.filter((st) => hasSticker(st, stats)).length;
+  $("stickerBook").innerHTML = STICKERS.map((st) => hasSticker(st, stats)
+    ? `<li class="sticker earned">${stickerSVG(st)}<span class="cap">${st.label}</span></li>`
+    : `<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">${lockedCaption(st, stats)}</span></li>`
+  ).join("");
+  $("stickerBook").setAttribute("aria-label", `${earnedCount} of ${STICKERS.length} stickers collected.`);
 
   const note = $("modelNote");
   if (!modelLoaded) note.textContent = "Loading the letter model\u2026";
@@ -408,56 +413,152 @@ function startSingleWord(word) {
   startWordSet({ id: `word_${word}`, name: `Spell ${word}`, words: [word], reward: 0, singleWord: true, word });
 }
 
+// ---------- practice stats & difficulty ----------
+// Each letter keeps a running average of how long it takes to sign and how often it's
+// skipped. Recent attempts count most, so a letter you've since mastered stops being
+// flagged. Difficulty is roughly "seconds to sign", plus a penalty for skipping.
+const STAT_WEIGHT = 0.3;       // how much the newest attempt moves the averages
+const SKIP_PENALTY = 10;       // a letter skipped every time scores +10
+const NEEDS_PRACTICE_AT = 8;   // difficulty above this gets the "Needs practice" flag
+
+function recordLetterStat(letter, skipped) {
+  if (!letter) return;
+  if (!progress.stats) progress.stats = {};
+  const s = progress.stats[letter] ||= { attempts: 0, avgTime: 0, skipRate: 0 };
+  if (s.skipRate == null) s.skipRate = s.attempts ? (s.skips || 0) / s.attempts : 0; // older stats format
+  const first = s.attempts === 0;
+  s.attempts += 1;
+  s.skipRate = first ? +skipped : s.skipRate + STAT_WEIGHT * (+skipped - s.skipRate);
+  if (!skipped) {
+    const secs = Math.max(0.5, (performance.now() - play.letterStart) / 1000);
+    s.avgTime = s.avgTime ? s.avgTime + STAT_WEIGHT * (secs - s.avgTime) : secs;
+  }
+  persistProgress();
+}
+
+function difficulty(letter) {
+  const s = progress.stats?.[letter];
+  if (!s || !s.attempts) return 0;
+  return (s.avgTime || 0) + SKIP_PENALTY * (s.skipRate || 0);
+}
+
+function needsPractice(letter) {
+  return difficulty(letter) > NEEDS_PRACTICE_AT;
+}
+
 // ---------- review tab ----------
 function renderReview() {
   const completed = progress.lettersCompleted || [];
   const reviewGrid = $("reviewLetters");
-  const stats = progress.stats || {};
-
   if (completed.length === 0) {
     reviewGrid.innerHTML = '<p class="empty-state">No letters completed yet. Head to the Letters tab to start!</p>';
   } else {
     reviewGrid.innerHTML = "";
-    completed.sort((a, b) => (stats[b]?.score || 0) - (stats[a]?.score || 0));
-
-    completed.forEach(letter => {
-      const s = stats[letter] || { avgTime: 0, skips: 0, score: 0 };
-      const avgSec = s.avgTime ? `${s.avgTime.toFixed(1)}s avg` : "New";
-      const needsPractice = s.score > 8 || s.skips > 0;
-
+    // Hardest letters first, so the ones that need practice are at the top.
+    [...completed].sort((a, b) => difficulty(b) - difficulty(a) || a.localeCompare(b)).forEach(letter => {
+      const s = progress.stats?.[letter];
+      const hard = needsPractice(letter);
+      const time = s?.avgTime ? `${s.avgTime.toFixed(1)}s avg` : s?.attempts ? "Skipped" : "Not timed yet";
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "letter-card is-done" + (needsPractice ? " needs-practice" : "");
+      btn.className = "letter-card is-done" + (hard ? " needs-practice" : "");
       btn.innerHTML = `
         <span class="letter-card-letter">${letter}</span>
-        <span class="letter-card-status">${avgSec} ${s.skips ? `(${s.skips} skips)` : ""}</span>
-        <span class="letter-card-coins">${needsPractice ? "⚠️ Needs Practice" : `${COIN}${LETTER_COINS_REPLAY}`}</span>`;
+        <span class="letter-card-time">${time}</span>
+        <span class="letter-card-status">${hard ? "Needs practice" : "Review"}</span>
+        <span class="letter-card-coins">${COIN} ${LETTER_COINS_REPLAY}</span>`;
+      btn.setAttribute("aria-label", `Review ${letter}. ${time}.${hard ? " Needs practice." : ""}`);
       btn.addEventListener("click", () => { returnTab = "review"; startSingleLetter(letter); });
       reviewGrid.append(btn);
     });
   }
 
-  const wordsDone = progress.wordsCompleted || [];
-  const reviewWordsList = $("reviewWords");
-  if (wordsDone.length === 0) {
-    reviewWordsList.innerHTML = '<li class="empty-state">No word sets completed yet.</li>';
+  const reviewWordGrid = $("reviewWords");
+  const completedWords = WORD_SETS.flatMap((ws) => ws.words).filter(wordDone);
+  if (completedWords.length === 0) {
+    reviewWordGrid.innerHTML = '<p class="empty-state">No words completed yet.</p>';
   } else {
-    reviewWordsList.innerHTML = "";
-    WORD_SETS.filter(ws => wordsDone.includes(ws.id)).forEach(ws => {
-      const coins = Math.round(ws.reward / 3);
+    reviewWordGrid.innerHTML = "";
+    [...new Set(completedWords)].forEach(word => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "level word-level is-done";
+      btn.className = "word-card is-done";
       btn.innerHTML = `
-        <span class="level-num wl-reward">${COIN}${coins}</span>
-        <span class="level-letters wl-words">${ws.words.join("  ")}</span>
-        <span class="level-status">Review</span>`;
-      btn.addEventListener("click", () => { returnTab = "review"; startWordSet(ws); });
-      const li = document.createElement("li");
-      li.append(btn);
-      reviewWordsList.append(li);
+        <span class="word-card-word">${word}</span>
+        <span class="word-card-status">Review</span>
+        <span class="word-card-coins">${COIN} ${WORD_COINS_REPLAY}</span>`;
+      btn.addEventListener("click", () => { returnTab = "review"; startSingleWord(word); });
+      reviewWordGrid.append(btn);
     });
   }
+  renderSlowestStacks();
+}
+
+// ---------- review: letters sorted worst to best ----------
+const TIERS = [
+  { id: "worst", label: "Worst", blurb: "Practice these first" },
+  { id: "medium", label: "Medium", blurb: "Getting there" },
+  { id: "best", label: "Best", blurb: "You've got these" },
+];
+
+// Learned letters that have been timed, hardest first, split into thirds.
+function letterTiers() {
+  const ranked = (progress.lettersCompleted || [])
+    .filter((l) => knows(l) && progress.stats?.[l]?.attempts)
+    .sort((a, b) => difficulty(b) - difficulty(a));
+  const count = Math.min(TIERS.length, ranked.length);
+  const tiers = [];
+  for (let i = 0, start = 0; i < count; i++) {
+    const end = Math.round((ranked.length * (i + 1)) / count);
+    tiers.push(ranked.slice(start, end));
+    start = end;
+  }
+  // With fewer than three letters, keep "Worst" and "Best" rather than "Worst" and "Medium".
+  const kinds = count === 2 ? [TIERS[0], TIERS[2]] : TIERS;
+  return tiers.map((letters, i) => ({ ...kinds[i], letters }));
+}
+
+function renderSlowestStacks() {
+  const tiers = letterTiers();
+  $("reviewStacks").hidden = !tiers.length;
+  const list = $("reviewStackList");
+  list.innerHTML = "";
+  tiers.forEach(({ id, label, blurb, letters }) => {
+    const times = letters.map((l) => progress.stats[l].avgTime).filter(Boolean);
+    const avg = times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0;
+    const meta = `${letters.length} letter${letters.length === 1 ? "" : "s"}${avg ? ` \u00B7 ${avg.toFixed(1)}s avg` : ""}`;
+
+    // A pile of letter cards, worst on top: the easiest letter is at the back (left)
+    // and the hardest is the front card. Bigger piles overlap more so they still fit.
+    const step = letters.length <= 5 ? 40 : Math.max(20, Math.floor(165 / (letters.length - 1)));
+    const cards = [...letters].reverse()
+      .map((l, k) => `<span class="deck-card${k === letters.length - 1 ? " is-top" : ""}" style="--i:${k}"><b>${l}</b></span>`)
+      .join("");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `deck deck-${id}`;
+    btn.innerHTML = `
+      <span class="deck-head">
+        <span class="deck-label">${label}</span>
+        <span class="deck-blurb">${blurb}</span>
+      </span>
+      <span class="deck-cards${letters.length > 6 ? " is-crowded" : ""}" style="--n:${letters.length};--step:${step}px" aria-hidden="true">${cards}</span>
+      <span class="deck-foot">
+        <span class="deck-meta">${meta}</span>
+        <span class="deck-go" aria-hidden="true">Practice \u2192</span>
+      </span>`;
+    btn.setAttribute("aria-label", `${label}: practice ${letters.join(", ")}. ${meta}.`);
+    btn.addEventListener("click", () => startReviewStack(letters));
+    const li = document.createElement("li");
+    li.append(btn);
+    list.append(li);
+  });
+}
+
+// A stack plays like a word set where every "word" is a single letter.
+function startReviewStack(letters) {
+  returnTab = "review";
+  startWordSet({ id: "review", name: "Slowest letters", words: letters, review: true });
 }
 
 // ---------- shop tab ----------
@@ -632,6 +733,8 @@ async function openCamera() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   $("camStatus").textContent = "";
+  play.letterStart = performance.now(); // camera start-up time shouldn't count as slow
+  play.lastNudge = play.letterStart;
   stopLoop = runLoop(video, tracker, onFrame);
 }
 
@@ -750,7 +853,7 @@ function advanceWord() {
   play.wordPos += 1;
   const word = play.queue[play.idx];
   if (play.wordPos >= word.length) {
-    const stickerNote = countWordForStickers();
+    const stickerNote = play.wordSet.review ? "" : countWordForStickers();
     play.idx += 1;
     if (play.idx >= play.queue.length) {
       finishWordSet();
@@ -774,6 +877,24 @@ function finishWordSet() {
     $("celebrateTitle").textContent = `You spelled ${ws.words[0]}!`;
     $("celebrateText").textContent = "Great fingerspelling. Try another word!";
     $("coinReward").hidden = true;
+    $("nextLetterBtn").hidden = true;
+    confetti();
+    $("celebrate").showModal();
+    return;
+  }
+
+  if (ws.review) {
+    const letters = [...new Set(play.queue)]; // a skipped letter comes round again, but pays once
+    const coins = letters.length * LETTER_COINS_REPLAY;
+    progress.coins = (progress.coins || 0) + coins;
+    persistProgress();
+
+    $("bigSticker").classList.remove("is-sticker");
+    $("bigSticker").innerHTML = `<img src="assets/coin.png" alt="coins" style="width:3rem">`;
+    $("celebrateTitle").textContent = "Stack complete!";
+    $("celebrateText").textContent = `You practiced ${letters.join(", ")}. Check the Review tab to see if they got faster.`;
+    $("coinReward").textContent = `+${coins} coins`;
+    $("coinReward").hidden = false;
     $("nextLetterBtn").hidden = true;
     confetti();
     $("celebrate").showModal();
@@ -938,8 +1059,8 @@ function advance() {
 }
 
 function skipLetter() {
-  recordLetterStat(currentTarget(), true);
   if (play.busy) return;
+  recordLetterStat(currentTarget(), true);
   if (play.mode === "word") {
     const word = play.queue[play.idx];
     if (!play.skipped.has(word)) {
@@ -1091,26 +1212,3 @@ $("celebrate").addEventListener("close", () => {
   renderTab(activeTab);
 })();
 
-
-// ---------- smart review & practice stats ----------
-function recordLetterStat(letter, skipped = false) {
-  if (!letter) return;
-  if (!progress.stats) progress.stats = {};
-  if (!progress.stats[letter]) {
-    progress.stats[letter] = { attempts: 0, totalTime: 0, avgTime: 0, skips: 0, score: 0 };
-  }
-
-  const s = progress.stats[letter];
-  s.attempts += 1;
-
-  if (skipped) {
-    s.skips += 1;
-  } else {
-    const elapsed = Math.max(0.5, (performance.now() - play.letterStart) / 1000);
-    s.totalTime += elapsed;
-    s.avgTime = s.totalTime / Math.max(1, s.attempts - s.skips);
-  }
-
-  s.score = (s.avgTime || 5) + (s.skips * 8);
-  persistProgress();
-}
