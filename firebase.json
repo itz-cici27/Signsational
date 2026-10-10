@@ -12,7 +12,7 @@
       "**/*.csv",
       "**/*.patch",
       "**/*.so",
-      "**/*.png",
+      "model/*.png",
       "requirements.txt",
       "CLAUDE.md",
       "README.md"
