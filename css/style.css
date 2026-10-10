@@ -689,6 +689,62 @@ legend { font-weight: 700; padding: 0 0.4rem; }
   margin: 0.5rem 0 0;
 }
 
+/* ---------- leaderboard ---------- */
+.leaderboard {
+  max-width: 32rem;
+}
+.leaderboard .loading {
+  color: var(--muted);
+  font-style: italic;
+}
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: var(--white);
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  margin-bottom: 0.5rem;
+}
+.lb-row.is-me {
+  border-color: var(--ink);
+  background: var(--sun);
+  box-shadow: 0 3px 0 var(--ink);
+}
+.lb-rank {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.4rem;
+  min-width: 2.2rem;
+  text-align: center;
+}
+.lb-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  flex: none;
+  object-fit: cover;
+}
+.lb-avatar-placeholder {
+  display: inline-block;
+  background: var(--line);
+}
+.lb-name {
+  flex: 1;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-streak {
+  font-family: var(--display);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .foot { text-align: center; padding: 1.5rem; }
 .foot a { color: var(--muted); }
 
