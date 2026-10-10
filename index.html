@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/signs.css">
 </head>
-<body>
+<body class="garden-bg">
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="topbar">
@@ -38,6 +38,7 @@
       <button class="tab" data-tab="words" type="button">Words</button>
       <button class="tab" data-tab="review" type="button">Review</button>
       <button class="tab" data-tab="shop" type="button">Shop</button>
+      <button class="tab" data-tab="volunteer" type="button">Volunteer</button>
     </nav>
 
     <!-- Home tab -->
@@ -76,7 +77,7 @@
         </div>
         <p class="small-note" id="customWordNote" role="status"></p>
       </form>
-      <ol class="levels" id="wordLevels"></ol>
+      <div class="word-card-grid" id="wordCardGrid"></div>
 
       <h2 class="section-title" id="signWordsTitle">Sign Words</h2>
       <p class="sub-lede">Learn whole ASL words with movement, like HELLO and THANK YOU.</p>
@@ -92,8 +93,8 @@
       <h3 class="section-subtitle">Completed Letters</h3>
       <div class="letter-grid" id="reviewLetters"></div>
 
-      <h3 class="section-subtitle">Completed Word Sets</h3>
-      <ol class="levels" id="reviewWords"></ol>
+      <h3 class="section-subtitle">Completed Words</h3>
+      <div class="word-card-grid" id="reviewWords"></div>
     </section>
 
     <!-- Shop tab -->
@@ -102,6 +103,44 @@
       <p class="sub-lede">Spend your coins on accessories for Mochi!</p>
       <div class="shop-preview" data-mascot id="shopMascot"></div>
       <div class="shop-grid" id="shopGrid"></div>
+    </section>
+
+
+    <!-- Volunteer tab -->
+    <section id="tab-volunteer" class="tab-panel" hidden>
+      <h2 class="section-title">Volunteer your hands</h2>
+      <p class="sub-lede">Mochi learns from real people signing. Every new hand helps the game work for more people. It takes about 10 minutes.</p>
+
+      <ol class="volunteer-steps">
+        <li>
+          <h3 class="section-subtitle">Pick what to record</h3>
+          <div class="volunteer-links">
+            <a class="level volunteer-card" href="recorder.html">
+              <span class="level-letters">Letters</span>
+              <span class="level-status">Hold each letter still</span>
+            </a>
+            <a class="level volunteer-card" href="words-recorder.html">
+              <span class="level-letters">Words</span>
+              <span class="level-status">Signs with movement, like HELLO</span>
+            </a>
+          </div>
+        </li>
+        <li>
+          <h3 class="section-subtitle">Record some takes</h3>
+          <p>Type your first name, choose a letter or word, and press <b>Record a take</b>. Try to record every one.</p>
+        </li>
+        <li>
+          <h3 class="section-subtitle">Download your CSV</h3>
+          <p>When you're done, press <b>Download CSV</b> on the recorder page. It saves a file to your computer.</p>
+        </li>
+        <li>
+          <h3 class="section-subtitle">Upload it to our form</h3>
+          <p>Attach the CSV file in our Google Form so the team can add it to the next training run.</p>
+          <a class="btn" href="https://forms.gle/VXch6uKoKDJ5u9V76" target="_blank" rel="noopener">Open the upload form</a>
+        </li>
+      </ol>
+
+      <p class="small-note">The CSV holds hand-landmark numbers (the dots on your fingers) and the first name you typed. No video or photos are saved or sent.</p>
     </section>
 
     <!-- Play screen (shared, hidden until a letter/word is started) -->
@@ -169,7 +208,6 @@
     </div>
   </dialog>
 
-  <footer class="foot"><a href="recorder.html">Team tools: record training data</a> · <a href="words-recorder.html">record word signs</a></footer>
 
   <script type="module" src="js/flavor-menu.js"></script>
   <script type="module" src="js/game.js"></script>

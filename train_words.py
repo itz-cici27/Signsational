@@ -39,7 +39,8 @@ rng = np.random.default_rng(0)
 
 
 def load_words() -> pd.DataFrame:
-    files = sorted(WORDS_DIR.glob("*.csv"))
+    # words-recorder.html exports are often dropped straight into data/, so read those too.
+    files = sorted(WORDS_DIR.glob("*.csv")) + sorted(LETTERS_DIR.glob("words_*.csv"))
     if not files:
         sys.exit("No CSV files in data/words/. Run tools/import_laplaces_words.py or record some words first.")
     frames = []

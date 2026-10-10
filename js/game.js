@@ -59,6 +59,8 @@ const CLOSE_CONF = 0.3;
 // Coin rewards
 const LETTER_COINS_FIRST = 10;
 const LETTER_COINS_REPLAY = 2;
+const WORD_COINS_FIRST = 8;
+const WORD_COINS_REPLAY = 2;
 
 const $ = (id) => document.getElementById(id);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -108,6 +110,7 @@ const isMotion = (l) => MOTION_LETTERS.includes(l);
 const knows = (l) => (isMotion(l) ? !!signClassifier && signClassifier.labels.includes(l) : classifier && classifier.labels.includes(l));
 const wordPlayable = (word) => classifier && word.split("").every(knows);
 const letterDone = (l) => (progress.lettersCompleted || []).includes(l);
+const wordDone = (w) => (progress.wordsCompleted || []).includes(w);
 
 // Unlock: first 5 letters free, then unlock next 5 after completing 3 from the previous group.
 function letterUnlocked(letter) {
@@ -341,30 +344,29 @@ function renderLetters() {
 
 // ---------- words tab ----------
 function renderWords() {
-  const list = $("wordLevels");
-  list.innerHTML = "";
+  const grid = $("wordCardGrid");
+  grid.innerHTML = "";
   const hasAnyLetter = (progress.lettersCompleted || []).length > 0;
 
   WORD_SETS.forEach((ws) => {
-    const playableWords = classifier ? ws.words.filter((w) => wordPlayable(w)) : [];
-    const done = (progress.wordsCompleted || []).includes(ws.id);
-    const unlocked = hasAnyLetter && playableWords.length > 0;
-    const coins = done ? Math.round(ws.reward / 3) : ws.reward;
-    let status = done ? "Done" : unlocked ? `${playableWords.length} words` : "Complete a letter first";
+    ws.words.forEach((word) => {
+      const playable = wordPlayable(word);
+      const done = wordDone(word);
+      const unlocked = hasAnyLetter && playable;
+      const coins = done ? WORD_COINS_REPLAY : WORD_COINS_FIRST;
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "level word-level" + (done ? " is-done" : "") + (unlocked ? "" : " is-locked");
-    btn.disabled = !unlocked;
-    btn.innerHTML = `
-      <span class="level-num wl-reward">${COIN}${coins}</span>
-      <span class="level-letters wl-words">${ws.words.join("  ")}</span>
-      <span class="level-status">${status}</span>`;
-    btn.setAttribute("aria-label", `${ws.name}: ${ws.words.join(", ")}. ${status}`);
-    btn.addEventListener("click", () => { returnTab = "words"; startWordSet(ws); });
-    const li = document.createElement("li");
-    li.append(btn);
-    list.append(li);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "word-card" + (done ? " is-done" : "") + (!unlocked ? " is-locked" : "");
+      btn.disabled = !unlocked;
+      btn.innerHTML = `
+        <span class="word-card-word">${word}</span>
+        <span class="word-card-status">${done ? "Learned" : !playable ? "Not trained" : !hasAnyLetter ? "Locked" : "Ready"}</span>
+        <span class="word-card-coins">${COIN} ${coins}</span>`;
+      btn.setAttribute("aria-label", `Spell ${word}. ${done ? "Learned" : !unlocked ? "Locked" : "Ready"}`);
+      btn.addEventListener("click", () => { returnTab = "words"; startSingleWord(word); });
+      grid.append(btn);
+    });
   });
 }
 
@@ -391,6 +393,10 @@ function startCustomWord(e) {
   note.textContent = "";
   returnTab = "words";
   startWordSet({ id: "custom", name: `Spell ${word}`, words: [word], reward: 0, custom: true });
+}
+
+function startSingleWord(word) {
+  startWordSet({ id: `word_${word}`, name: `Spell ${word}`, words: [word], reward: 0, singleWord: true, word });
 }
 
 // ---------- review tab ----------
@@ -424,23 +430,20 @@ function renderReview() {
 
   const wordsDone = progress.wordsCompleted || [];
   const reviewWordsList = $("reviewWords");
-  if (wordsDone.length === 0 && !(progress.reviewsDone || []).length) {
+  if (wordsDone.length === 0) {
     reviewWordsList.innerHTML = '<li class="empty-state">No word sets completed yet.</li>';
   } else {
-    reviewWordsList.innerHTML = "";
-    WORD_SETS.filter(ws => wordsDone.includes(ws.id)).forEach(ws => {
-      const coins = Math.round(ws.reward / 3);
+    reviewWordGrid.innerHTML = "";
+    completedWords.forEach(word => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "level word-level is-done";
+      btn.className = "word-card is-done";
       btn.innerHTML = `
-        <span class="level-num wl-reward">${COIN}${coins}</span>
-        <span class="level-letters wl-words">${ws.words.join("  ")}</span>
-        <span class="level-status">Review</span>`;
-      btn.addEventListener("click", () => { returnTab = "review"; startWordSet(ws); });
-      const li = document.createElement("li");
-      li.append(btn);
-      reviewWordsList.append(li);
+        <span class="word-card-word">${word}</span>
+        <span class="word-card-status">Review</span>
+        <span class="word-card-coins">${COIN} ${WORD_COINS_REPLAY}</span>`;
+      btn.addEventListener("click", () => { returnTab = "review"; startSingleWord(word); });
+      reviewWordGrid.append(btn);
     });
   }
   renderReviewPractice();
@@ -825,21 +828,51 @@ function finishWordSet() {
   play.busy = true;
   closeCamera();
   const ws = play.wordSet;
-  if (ws.review) {
-    finishReviewStack(ws);
-    return;
-  }
   if (ws.custom) {
     $("bigSticker").classList.remove("is-sticker");
     $("bigSticker").innerHTML = "";
     $("celebrateTitle").textContent = `You spelled ${ws.words[0]}!`;
     $("celebrateText").textContent = "Great fingerspelling. Try another word!";
     $("coinReward").hidden = true;
-    $("nextLevelBtn").hidden = true;
+    $("nextLetterBtn").hidden = true;
     confetti();
     $("celebrate").showModal();
     return;
   }
+
+  if (ws.singleWord) {
+    const word = ws.word;
+    const firstTime = !wordDone(word);
+    const coins = firstTime ? WORD_COINS_FIRST : WORD_COINS_REPLAY;
+
+    if (firstTime) {
+      if (!progress.wordsCompleted) progress.wordsCompleted = [];
+      progress.wordsCompleted.push(word);
+    }
+    progress.coins = (progress.coins || 0) + coins;
+    persistProgress();
+
+    $("bigSticker").innerHTML = `<img src="assets/coin.png" alt="coins" style="width:3rem">`;
+    $("celebrateTitle").textContent = firstTime ? `You spelled ${word}!` : `Nice review of ${word}!`;
+    $("celebrateText").textContent = firstTime ? "Keep going to unlock more words." : "Practice makes perfect!";
+    $("coinReward").textContent = `+${coins} coins`;
+    $("coinReward").hidden = false;
+
+    // Show "Next word" button if there's another playable word
+    const allWords = WORD_SETS.flatMap(s => s.words);
+    const idx = allWords.indexOf(word);
+    const next = allWords.slice(idx + 1).find(w => wordPlayable(w));
+    const nextBtn = $("nextLetterBtn");
+    nextBtn.hidden = !next;
+    nextBtn.textContent = "Next word";
+    nextBtn.onclick = next ? () => { goingToNextLetter = true; $("celebrate").close(); startSingleWord(next); } : null;
+
+    confetti();
+    $("celebrate").showModal();
+    return;
+  }
+
+  // Legacy word-set completion (shouldn't normally be reached)
   const firstTime = !(progress.wordsCompleted || []).includes(ws.id);
   const coins = firstTime ? ws.reward : Math.round(ws.reward / 3);
 
@@ -853,9 +886,7 @@ function finishWordSet() {
   $("bigSticker").classList.remove("is-sticker");
   $("bigSticker").innerHTML = `<img src="assets/coin.png" alt="coins" style="width:3rem">`;
   $("celebrateTitle").textContent = `${ws.name} complete!`;
-  $("celebrateText").textContent = firstTime
-    ? "Great spelling! Those coins are yours."
-    : "Nice practice run!";
+  $("celebrateText").textContent = firstTime ? "Great spelling! Those coins are yours." : "Nice practice run!";
   $("coinReward").textContent = `+${coins} coins`;
   $("coinReward").hidden = false;
   $("nextLetterBtn").hidden = true;
@@ -1018,8 +1049,10 @@ function finishLetter() {
   // Show "Next letter" if there's a next unlocked+trained letter
   const idx = ALL_LETTERS.indexOf(letter);
   const next = ALL_LETTERS.slice(idx + 1).find(l => knows(l) && letterUnlocked(l));
-  $("nextLetterBtn").hidden = !next;
-  $("nextLetterBtn").onclick = next ? () => { goingToNextLetter = true; $("celebrate").close(); startSingleLetter(next); } : null;
+  const nextBtn = $("nextLetterBtn");
+  nextBtn.hidden = !next;
+  nextBtn.textContent = "Next letter";
+  nextBtn.onclick = next ? () => { goingToNextLetter = true; $("celebrate").close(); startSingleLetter(next); } : null;
 
   confetti();
   $("celebrate").showModal();
@@ -1098,7 +1131,8 @@ $("celebrate").addEventListener("close", () => {
 
 (async function init() {
   applySettings();
-  switchTab("home");
+  const startTab = location.hash.slice(1);
+  switchTab(document.getElementById(`tab-${startTab}`) ? startTab : "home");
 
   onAuthChange(async (user) => {
     updateAuthUI(user);
