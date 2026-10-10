@@ -166,7 +166,7 @@ function confetti(emoji) {
   const box = $("confetti");
   box.innerHTML = "";
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const bits = ["✨", "💜", "💛", "\u{1FA99}", emoji];
+  const bits = ["\u2728", "\uD83D\uDC9C", "\uD83D\uDC9B", "\u2728", emoji];
   for (let i = 0; i < 26; i++) {
     const s = document.createElement("span");
     s.textContent = pick(bits);

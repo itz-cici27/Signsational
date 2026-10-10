@@ -21,7 +21,7 @@ function render(classifier) {
       <span class="level-num" aria-hidden="true">${s.emoji}</span>
       <span class="level-letters">${s.word}</span>
       <span class="level-status">${status}</span>
-      <span class="level-coins">\u{1FA99} ${signRewards(isDone)}</span>`;
+      <span class="level-coins"><img class="coin-icon" src="assets/coin.png" alt="coins" aria-hidden="true"> ${signRewards(isDone)}</span>`;
     btn.setAttribute("aria-label", `Sign the word ${s.word}. ${status}`);
     btn.addEventListener("click", () => (location.href = `signs.html?word=${encodeURIComponent(s.word)}`));
     const li = document.createElement("li");

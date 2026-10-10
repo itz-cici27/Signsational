@@ -9,6 +9,8 @@ import {
 import { mascotSVG, applyFlavor } from "./mascot.js";
 import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud } from "./firebase.js";
 
+const COIN = `<img class="coin-icon" src="assets/coin.png" alt="coins" aria-hidden="true">`;
+
 // How sure the model must be, and for how many frames in a row (~30 frames = 1 second).
 const STRICTNESS = {
   easy: { conf: 0.55, hold: 8 },
@@ -239,7 +241,7 @@ function renderHome() {
       <span class="level-num">${lv.id}</span>
       <span class="level-letters">${lv.letters.join(" ")}</span>
       <span class="level-status">${status}</span>
-      <span class="level-coins">\u{1FA99} ${coins}</span>`;
+      <span class="level-coins">${COIN} ${coins}</span>`;
     btn.setAttribute("aria-label", `Level ${lv.id}, letters ${lv.letters.join(", ")}. ${status}`);
     btn.addEventListener("click", () => startLevel(lv));
     const li = document.createElement("li");
@@ -283,14 +285,14 @@ function renderWordChallenges() {
     const done = (progress.wordsCompleted || []).includes(ws.id);
     const unlocked = completedCount >= 1 && playableWords.length > 0;
     const coins = done ? Math.round(ws.reward / 3) : ws.reward;
-    let status = done ? "\u{1FA99} Done" : unlocked ? `${playableWords.length} words` : "Complete a letter level first";
+    let status = done ? "Done" : unlocked ? `${playableWords.length} words` : "Complete a letter level first";
 
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "level word-level" + (done ? " is-done" : "") + (unlocked ? "" : " is-locked");
     btn.disabled = !unlocked;
     btn.innerHTML = `
-      <span class="level-num wl-reward">\u{1FA99}${coins}</span>
+      <span class="level-num wl-reward">${COIN}${coins}</span>
       <span class="level-letters wl-words">${ws.words.join("  ")}</span>
       <span class="level-status">${status}</span>`;
     btn.setAttribute("aria-label", `${ws.name}: ${ws.words.join(", ")}. ${status}`);
@@ -312,8 +314,8 @@ function renderShop() {
     let actionText, actionClass;
     if (equipped) { actionText = "Unequip"; actionClass = "is-equipped"; }
     else if (owned) { actionText = "Equip"; actionClass = "is-owned"; }
-    else if (canAfford) { actionText = `Buy \u00B7 \u{1FA99}${item.price}`; actionClass = ""; }
-    else { actionText = `\u{1FA99}${item.price}`; actionClass = "is-expensive"; }
+    else if (canAfford) { actionText = `Buy \u00B7 ${item.price}`; actionClass = ""; }
+    else { actionText = `${item.price}`; actionClass = "is-expensive"; }
 
     return `<button class="shop-item ${actionClass}" data-item="${item.id}" ${!owned && !canAfford ? "disabled" : ""}>
       <span class="shop-emoji">${item.emoji}</span>
@@ -542,7 +544,7 @@ function finishWordSet() {
   progress.coins = (progress.coins || 0) + coins;
   persistProgress();
 
-  $("bigSticker").textContent = "\u{1FA99}";
+  $("bigSticker").innerHTML = `<img src="assets/coin.png" alt="coins" style="width:3rem">`;
   $("celebrateTitle").textContent = `${ws.name} complete!`;
   $("celebrateText").textContent = firstTime
     ? "Great spelling! Those coins are yours."
@@ -710,7 +712,7 @@ function confetti() {
   box.innerHTML = "";
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const bits = play.mode === "word"
-    ? ["\u2728", "\uD83D\uDC9C", "\uD83D\uDC9B", "\u{1FA99}", "\u{1FA99}"]
+    ? ["\u2728", "\uD83D\uDC9C", "\uD83D\uDC9B", "\u2728", "\uD83D\uDC9B"]
     : ["\u2728", "\uD83D\uDC9C", "\uD83D\uDC9B", "\uD83C\uDF38", play.level.sticker];
   for (let i = 0; i < 26; i++) {
     const s = document.createElement("span");
