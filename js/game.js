@@ -6,6 +6,7 @@ import {
   loadSettings, saveSettings, loadProgress, saveProgress, bumpStreak, currentStreak,
   loadShop, saveShop,
 } from "./store.js";
+import { STICKERS, stickerStats, hasSticker, newStickers, lockedCaption, stickerSVG } from "./stickers.js";
 import { mascotSVG, applyFlavor } from "./mascot.js";
 import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud } from "./firebase.js";
 
@@ -231,6 +232,8 @@ function mergeProgress(local, cloud) {
     completed: [...new Set([...local.completed, ...(cloud.completed || [])])],
     lettersCompleted: [...new Set([...(local.lettersCompleted || []), ...(cloud.lettersCompleted || [])])],
     wordsCompleted: [...new Set([...(local.wordsCompleted || []), ...(cloud.wordsCompleted || [])])],
+    signsCompleted: [...new Set([...(local.signsCompleted || []), ...(cloud.signsCompleted || [])])],
+    wordsSigned: Math.max(local.wordsSigned || 0, cloud.wordsSigned || 0),
     coins: Math.max(local.coins || 0, cloud.coins || 0),
     streak: (local.lastDay || "") >= (cloud.lastDay || "") ? local.streak : cloud.streak,
     lastDay: (local.lastDay || "") >= (cloud.lastDay || "") ? local.lastDay : cloud.lastDay,
@@ -261,11 +264,14 @@ function updateAuthUI(user) {
 
 // ---------- home tab ----------
 function renderHome() {
-  $("stickerBook").innerHTML = ALL_LETTERS.filter(letterDone).length > 0
-    ? ALL_LETTERS.filter(letterDone).map(l =>
-        `<li class="sticker earned"><span class="disc" aria-hidden="true">${l}</span><span class="cap">${l}</span></li>`
-      ).join("")
-    : '<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">Complete letters to collect!</span></li>';
+  // Achievement stickers (see js/stickers.js), in the player's Mochi flavor.
+  const stats = stickerStats(progress);
+  const earnedCount = STICKERS.filter((st) => hasSticker(st, stats)).length;
+  $("stickerBook").innerHTML = STICKERS.map((st) => hasSticker(st, stats)
+    ? `<li class="sticker earned">${stickerSVG(st)}<span class="cap">${st.label}</span></li>`
+    : `<li class="sticker"><span class="disc" aria-hidden="true">?</span><span class="cap">${lockedCaption(st, stats)}</span></li>`
+  ).join("");
+  $("stickerBook").setAttribute("aria-label", `${earnedCount} of ${STICKERS.length} stickers collected.`);
 
   const note = $("modelNote");
   if (!modelLoaded) note.textContent = "Loading the letter model\u2026";
@@ -623,15 +629,27 @@ function showWordLetter() {
   setMood("idle", `Spell "${word}" \u2014 show me ${letter}.`, true);
 }
 
+// Every finished word counts toward the word stickers (Sign Words count too, in signs-game.js).
+function countWordForStickers() {
+  const before = stickerStats(progress);
+  progress.wordsSigned = before.words + 1;
+  persistProgress();
+  const earned = newStickers(before, stickerStats(progress));
+  return earned.length ? `New sticker: ${earned.map((st) => st.label).join(" and ")}! Check your sticker book.` : "";
+}
+
 function advanceWord() {
   play.wordPos += 1;
   const word = play.queue[play.idx];
   if (play.wordPos >= word.length) {
+    const stickerNote = countWordForStickers();
     play.idx += 1;
     if (play.idx >= play.queue.length) {
       finishWordSet();
+      if (stickerNote) $("celebrateText").textContent += ` ${stickerNote}`;
     } else {
       showWord();
+      if (stickerNote) say(stickerNote);
     }
   } else {
     showWordLetter();
@@ -643,6 +661,7 @@ function finishWordSet() {
   closeCamera();
   const ws = play.wordSet;
   if (ws.custom) {
+    $("bigSticker").classList.remove("is-sticker");
     $("bigSticker").innerHTML = "";
     $("celebrateTitle").textContent = `You spelled ${ws.words[0]}!`;
     $("celebrateText").textContent = "Great fingerspelling. Try another word!";
@@ -662,6 +681,7 @@ function finishWordSet() {
   progress.coins = (progress.coins || 0) + coins;
   persistProgress();
 
+  $("bigSticker").classList.remove("is-sticker");
   $("bigSticker").innerHTML = `<img src="assets/coin.png" alt="coins" style="width:3rem">`;
   $("celebrateTitle").textContent = `${ws.name} complete!`;
   $("celebrateText").textContent = firstTime
@@ -800,6 +820,7 @@ function finishLetter() {
   const firstTime = !letterDone(letter);
   const coins = firstTime ? LETTER_COINS_FIRST : LETTER_COINS_REPLAY;
 
+  const statsBefore = stickerStats(progress);
   if (firstTime) {
     if (!progress.lettersCompleted) progress.lettersCompleted = [];
     progress.lettersCompleted.push(letter);
@@ -807,11 +828,19 @@ function finishLetter() {
   progress.coins = (progress.coins || 0) + coins;
   persistProgress();
 
-  $("bigSticker").textContent = letter;
+  // A letter can unlock achievement stickers: show the newest one instead of the letter.
+  const earnedNow = newStickers(statsBefore, stickerStats(progress));
+  const newSticker = earnedNow[earnedNow.length - 1] || null;
+  const big = $("bigSticker");
+  big.classList.toggle("is-sticker", !!newSticker);
+  if (newSticker) big.innerHTML = stickerSVG(newSticker);
+  else big.textContent = letter;
   $("celebrateTitle").textContent = firstTime ? `You learned the letter ${letter}!` : `Nice review of ${letter}!`;
-  $("celebrateText").textContent = firstTime
-    ? "Keep going to unlock more letters."
-    : "Practice makes perfect!";
+  $("celebrateText").textContent = newSticker
+    ? `You earned the "${earnedNow.map((st) => st.label).join('" and "')}" sticker${earnedNow.length > 1 ? "s" : ""}!`
+    : firstTime
+      ? "Keep going to unlock more letters."
+      : "Practice makes perfect!";
   $("coinReward").textContent = `+${coins} coins`;
   $("coinReward").hidden = false;
 

@@ -679,14 +679,14 @@ legend { font-weight: 700; padding: 0 0.4rem; }
 }
 
 /* ---------- Mochi flavors (picked in Mochi's Shop) ---------- */
-html[data-flavor="matcha"] { --mochi: #9BE8C8; --mochi-cheek: #FF6FAE; }
-html[data-flavor="strawberry"] { --mochi: #FFB8D2; --mochi-cheek: #F0508F; }
-html[data-flavor="mango"] { --mochi: #FFD98A; --mochi-cheek: #FF8A65; }
-html[data-flavor="ube"] { --mochi: #CDB4F5; --mochi-cheek: #FF6FAE; }
-html[data-flavor="blueberry"] { --mochi: #A9C8FF; --mochi-cheek: #FF6FAE; }
-html[data-flavor="peach"] { --mochi: #FFC2A3; --mochi-cheek: #FF6F91; }
-html[data-flavor="vanilla"] { --mochi: #FFF3D6; --mochi-cheek: #FF8FB8; }
-html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8; }
+html[data-flavor="matcha"] { --mochi: #9BE8C8; --mochi-cheek: #FF6FAE;  --sticker-disc: #5FD3A4; }
+html[data-flavor="strawberry"] { --mochi: #FFB8D2; --mochi-cheek: #F0508F;  --sticker-disc: #FF6FAE; }
+html[data-flavor="mango"] { --mochi: #FFD98A; --mochi-cheek: #FF8A65;  --sticker-disc: #FFC24A; }
+html[data-flavor="ube"] { --mochi: #CDB4F5; --mochi-cheek: #FF6FAE;  --sticker-disc: #A98BE6; }
+html[data-flavor="blueberry"] { --mochi: #A9C8FF; --mochi-cheek: #FF6FAE;  --sticker-disc: #7DA9F5; }
+html[data-flavor="peach"] { --mochi: #FFC2A3; --mochi-cheek: #FF6F91;  --sticker-disc: #FF9F75; }
+html[data-flavor="vanilla"] { --mochi: #FFF3D6; --mochi-cheek: #FF8FB8;  --sticker-disc: #F2D9A0; }
+html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8;  --sticker-disc: #A39BB3; }
 
 .flavor {
   font: inherit;
@@ -756,3 +756,11 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8; }
   padding: 0.55rem 0.8rem;
 }
 .custom-word-note-error { color: var(--danger); }
+
+/* ---------- sticker book: peekaboo Mochi stickers (js/stickers.js) ---------- */
+.sticker .sticker-art { width: 104px; height: auto; display: block; transform: rotate(-6deg); }
+.sticker.earned:nth-child(even) .sticker-art { transform: rotate(5deg); }
+.sticker .disc { width: 92px; height: 92px; margin: 6px; }
+.big-sticker.is-sticker { background: none; border: none; box-shadow: none; width: 160px; height: 166px; transform: none; animation: none; }
+.big-sticker.is-sticker .sticker-art { width: 100%; height: auto; animation: sticker-pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1); }
+@keyframes sticker-pop { from { transform: scale(0.3) rotate(-25deg); } to { transform: scale(1) rotate(-6deg); } }

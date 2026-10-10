@@ -3,6 +3,7 @@ import { createHandTracker, startCamera, runLoop, drawHand } from "./hands.js";
 import { SIGN_WORDS, NONE, SignBuffer, loadSignClassifier, signRewards } from "./signs.js";
 import { loadSettings, loadProgress, saveProgress, bumpStreak, currentStreak, loadShop } from "./store.js";
 import { mascotSVG, applyFlavor } from "./mascot.js";
+import { stickerStats, newStickers, stickerSVG } from "./stickers.js";
 
 // How sure the model must be, and for how many checks in a row (one check every
 // PREDICT_EVERY frames, so ~10 checks per second).
@@ -150,7 +151,10 @@ function success() {
   const done = progress.signsCompleted || [];
   const firstTime = !done.includes(s.word);
   const coins = signRewards(!firstTime);
+  const statsBefore = stickerStats(progress);
   if (firstTime) progress.signsCompleted = [...done, s.word];
+  progress.wordsSigned = statsBefore.words + 1; // every completed word counts toward word stickers
+  const earned = newStickers(statsBefore, stickerStats(progress));
   progress.coins = (progress.coins || 0) + coins;
   progress = bumpStreak(progress);
   saveProgress(progress);
@@ -158,9 +162,15 @@ function success() {
 
   setTimeout(() => {
     $("target").classList.remove("is-hit");
-    $("bigSticker").textContent = s.emoji;
+    const big = $("bigSticker");
+    const newest = earned[earned.length - 1];
+    big.classList.toggle("is-sticker", !!newest);
+    if (newest) big.innerHTML = stickerSVG(newest);
+    else big.textContent = s.emoji;
     $("celebrateTitle").textContent = `You signed ${s.word}!`;
-    $("celebrateText").textContent = firstTime ? "A brand new word for your collection." : "Nice practice. Repetition makes it stick.";
+    $("celebrateText").textContent = newest
+      ? `You earned the "${earned.map((st) => st.label).join('" and "')}" sticker${earned.length > 1 ? "s" : ""}!`
+      : firstTime ? "A brand new word for your collection." : "Nice practice. Repetition makes it stick.";
     $("coinReward").textContent = `+${coins} coins`;
     confetti(s.emoji);
     $("celebrate").showModal();
