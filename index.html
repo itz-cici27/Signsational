@@ -189,7 +189,11 @@
 
   <dialog id="settings" aria-labelledby="settingsTitle">
     <h2 id="settingsTitle">Settings</h2>
-    <label class="toggle"><input type="checkbox" id="setLeft"> I sign with my left hand</label>
+    <fieldset>
+      <legend>Which hand do you sign with?</legend>
+      <label class="toggle"><input type="radio" name="hand" value="right"> Right hand</label>
+      <label class="toggle"><input type="radio" name="hand" value="left"> Left hand</label>
+    </fieldset>
     <fieldset>
       <legend>How strict should checking be?</legend>
       <label class="toggle"><input type="radio" name="strict" value="easy"> Relaxed</label>

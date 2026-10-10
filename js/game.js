@@ -997,7 +997,7 @@ function confetti() {
 
 // ---------- settings ----------
 function openSettings() {
-  $("setLeft").checked = settings.leftHanded;
+  document.querySelectorAll('input[name="hand"]').forEach((r) => (r.checked = r.value === (settings.leftHanded ? "left" : "right")));
   $("setBig").checked = settings.bigText;
   $("setSound").checked = settings.sound;
   $("setUnlock").checked = settings.unlockAll;
@@ -1008,7 +1008,7 @@ function openSettings() {
 function updateSettings() {
   settings = {
     ...settings,
-    leftHanded: $("setLeft").checked,
+    leftHanded: document.querySelector('input[name="hand"]:checked')?.value === "left",
     bigText: $("setBig").checked,
     sound: $("setSound").checked,
     unlockAll: $("setUnlock").checked,
