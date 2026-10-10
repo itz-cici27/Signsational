@@ -82,7 +82,7 @@ function currentTarget() {
 }
 
 function signPath(letter) {
-  return `assets/signs/${settings.leftHanded ? "left" : "right"}/${letter}.jpg`;
+  return `assets/signs/${settings.leftHanded ? "right" : "left"}/${letter}.jpg`;
 }
 
 function setMascot(id, state) {
