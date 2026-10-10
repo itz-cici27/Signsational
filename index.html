@@ -117,39 +117,38 @@
 
     <!-- Volunteer tab -->
     <section id="tab-volunteer" class="tab-panel" hidden>
-      <h2 class="section-title">Volunteer your hands</h2>
-      <p class="sub-lede">Mochi learns from real people signing. Every new hand helps the game work for more people. It takes about 10 minutes.</p>
+      <div class="vol-hero">
+        <div class="mascot-stage vol-mascot" data-mascot></div>
+        <div>
+          <h2 class="vol-title">Help Mochi learn more hands</h2>
+          <p class="sub-lede">Record yourself signing so the game works for more people. It takes about 10 minutes.</p>
+        </div>
+      </div>
 
-      <ol class="volunteer-steps">
+      <ol class="vol-steps">
         <li>
-          <h3 class="section-subtitle">Pick what to record</h3>
+          <h3 class="vol-step-title">Pick what to record</h3>
           <div class="volunteer-links">
-            <a class="level volunteer-card" href="recorder.html">
-              <span class="level-letters">Letters</span>
-              <span class="level-status">Hold each letter still</span>
-            </a>
-            <a class="level volunteer-card" href="words-recorder.html">
-              <span class="level-letters">Words</span>
-              <span class="level-status">Signs with movement, like HELLO</span>
-            </a>
+            <a class="volunteer-card" href="recorder.html"><b>Letters</b> <span>Hold each letter still</span></a>
+            <a class="volunteer-card" href="words-recorder.html"><b>Words</b> <span>Signs with movement, like HELLO</span></a>
           </div>
         </li>
         <li>
-          <h3 class="section-subtitle">Record some takes</h3>
-          <p>Type your first name, choose a letter or word, and press <b>Record a take</b>. Try to record every one.</p>
+          <h3 class="vol-step-title">Record some takes</h3>
+          <p>Type your first name, choose a letter or word, and press <b>Record a take</b>.</p>
         </li>
         <li>
-          <h3 class="section-subtitle">Download your CSV</h3>
-          <p>When you're done, press <b>Download CSV</b> on the recorder page. It saves a file to your computer.</p>
+          <h3 class="vol-step-title">Download your CSV</h3>
+          <p>Press <b>Download CSV</b> on the recorder page when you're done.</p>
         </li>
         <li>
-          <h3 class="section-subtitle">Upload it to our form</h3>
-          <p>Attach the CSV file in our Google Form so the team can add it to the next training run.</p>
+          <h3 class="vol-step-title">Upload it to our form</h3>
+          <p>Attach the file and we'll add it to the next training run.</p>
           <a class="btn" href="https://forms.gle/VXch6uKoKDJ5u9V76" target="_blank" rel="noopener">Open the upload form</a>
         </li>
       </ol>
 
-      <p class="small-note">The CSV holds hand-landmark numbers (the dots on your fingers) and the first name you typed. No video or photos are saved or sent.</p>
+      <p class="small-note">The CSV only holds the dots on your fingers and your first name. No video or photos are saved or sent.</p>
     </section>
 
     <!-- Play screen (shared, hidden until a letter/word is started) -->
@@ -175,7 +174,7 @@
             </svg>
             <span class="target-letter" id="targetLetter" aria-live="polite"></span>
           </div>
-          <figure class="sign-ref" id="signRef" hidden><img id="signImg" alt=""></figure>
+          <figure class="sign-ref" id="signRef" hidden><img id="signImg" alt=""><video id="signVid" autoplay muted loop playsinline hidden></video></figure>
           <p class="hint" id="hint"></p>
           <p class="seeing" id="seeing"></p>
           <div class="coach">
