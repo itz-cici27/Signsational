@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-Signsational (also called "Sign Language Snap") is a browser-based ASL fingerspelling learning game. A webcam tracks the user's hand via MediaPipe, a neural network classifies the handshape, and game logic awards stickers for completing levels. Built for Code Ada 2026, Tech for Equity track.
+Signsational is a browser-based ASL fingerspelling learning game. A webcam tracks the user's hand via MediaPipe, a neural network classifies the handshape, and game logic awards stickers for completing levels. Built for Code Ada 2026, Tech for Equity track.
 
 ## Running locally
 
