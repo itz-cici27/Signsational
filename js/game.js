@@ -6,6 +6,7 @@ import {
   loadShop, saveShop,
 } from "./store.js";
 import { mascotSVG } from "./mascot.js";
+import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud } from "./firebase.js";
 
 // How sure the model must be, and for how many frames in a row (~30 frames = 1 second).
 const STRICTNESS = {
@@ -61,6 +62,10 @@ function currentTarget() {
   return play.queue[play.idx];
 }
 
+function signPath(letter) {
+  return `assets/signs/${settings.leftHanded ? "left" : "right"}/${letter}.jpg`;
+}
+
 function setMascot(id, state) {
   const el = $(id);
   el.classList.remove("is-cheer", "is-think");
@@ -101,7 +106,55 @@ function chime() {
 
 function applySettings() {
   document.documentElement.classList.toggle("big-text", settings.bigText);
-  $("signImg").classList.toggle("mirrored", settings.leftHanded);
+}
+
+// ---------- cloud sync ----------
+function syncToCloud() {
+  if (currentUser()) saveToCloud(progress, shop);
+}
+
+function persistProgress() {
+  persistProgress();
+  syncToCloud();
+}
+
+function persistShop() {
+  saveShop(shop);
+  syncToCloud();
+}
+
+function mergeProgress(local, cloud) {
+  if (!cloud) return local;
+  return {
+    completed: [...new Set([...local.completed, ...(cloud.completed || [])])],
+    wordsCompleted: [...new Set([...(local.wordsCompleted || []), ...(cloud.wordsCompleted || [])])],
+    coins: Math.max(local.coins || 0, cloud.coins || 0),
+    streak: (local.lastDay || "") >= (cloud.lastDay || "") ? local.streak : cloud.streak,
+    lastDay: (local.lastDay || "") >= (cloud.lastDay || "") ? local.lastDay : cloud.lastDay,
+  };
+}
+
+function mergeShop(local, cloud) {
+  if (!cloud) return local;
+  return {
+    owned: [...new Set([...local.owned, ...(cloud.owned || [])])],
+    equipped: cloud.equipped && cloud.equipped.length ? cloud.equipped : local.equipped,
+  };
+}
+
+function updateAuthUI(user) {
+  $("signInBtn").hidden = !!user;
+  $("userInfo").hidden = !user;
+  if (user) {
+    $("userName").textContent = user.displayName || "Signed in";
+    const avatar = $("userAvatar");
+    if (user.photoURL) {
+      avatar.src = user.photoURL;
+      avatar.hidden = false;
+    } else {
+      avatar.hidden = true;
+    }
+  }
 }
 
 // ---------- home screen ----------
@@ -228,16 +281,16 @@ function handleShopClick(itemId) {
     } else {
       shop.equipped.push(itemId);
     }
-    saveShop(shop);
+    persistShop();
     renderMascots();
     renderShop();
   } else if ((progress.coins || 0) >= item.price) {
     // Buy and auto-equip
     progress.coins -= item.price;
-    saveProgress(progress);
+    persistProgress();
     shop.owned.push(itemId);
     shop.equipped.push(itemId);
-    saveShop(shop);
+    persistShop();
     renderMascots();
     renderShop();
     $("coinDisplay").textContent = progress.coins;
@@ -329,7 +382,7 @@ function showLetter() {
   img.onload = () => ($("signRef").hidden = false);
   img.onerror = () => ($("signRef").hidden = true);
   img.alt = `Reference photo of the ASL letter ${letter}`;
-  img.src = `assets/signs/${letter}.jpg`;
+  img.src = signPath(letter);
 
   setRing(0);
   setMascot("playMascot", "");
@@ -391,7 +444,7 @@ function showWordLetter() {
   img.onload = () => ($("signRef").hidden = false);
   img.onerror = () => ($("signRef").hidden = true);
   img.alt = `Reference photo of the ASL letter ${letter}`;
-  img.src = `assets/signs/${letter}.jpg`;
+  img.src = signPath(letter);
 
   setRing(0);
   setMascot("playMascot", "");
@@ -425,7 +478,7 @@ function finishWordSet() {
     progress.wordsCompleted.push(ws.id);
   }
   progress.coins = (progress.coins || 0) + coins;
-  saveProgress(progress);
+  persistProgress();
 
   $("bigSticker").textContent = "\u{1FA99}";
   $("celebrateTitle").textContent = `${ws.name} complete!`;
@@ -484,7 +537,7 @@ function success() {
   say(pick(CHEERS));
   chime();
   progress = bumpStreak(progress);
-  saveProgress(progress);
+  persistProgress();
   $("streakCount").textContent = currentStreak(progress);
   setTimeout(() => {
     $("target").classList.remove("is-hit");
@@ -529,7 +582,7 @@ function finishLevel() {
 
   if (firstTime) progress.completed.push(lv.id);
   progress.coins = (progress.coins || 0) + coins;
-  saveProgress(progress);
+  persistProgress();
 
   $("bigSticker").textContent = lv.sticker;
   $("celebrateTitle").textContent = firstTime ? `You earned the ${lv.stickerName} sticker!` : `Level ${lv.id} complete!`;
@@ -583,6 +636,8 @@ function updateSettings() {
   };
   saveSettings(settings);
   applySettings();
+  const current = play.queue[play.idx];
+  if (!$("play").hidden && current) $("signImg").src = signPath(current);
   if (!$("home").hidden) renderHome();
 }
 
@@ -594,6 +649,12 @@ $("continueBtn").addEventListener("click", () => {
 $("backBtn").addEventListener("click", goHome);
 $("skipBtn").addEventListener("click", skipLetter);
 $("settingsBtn").addEventListener("click", openSettings);
+$("signInBtn").addEventListener("click", async () => {
+  try { await signIn(); } catch (err) {
+    if (err.code !== "auth/popup-closed-by-user") console.error("Sign-in failed:", err);
+  }
+});
+$("signOutBtn").addEventListener("click", () => signOutUser());
 $("settingsDone").addEventListener("click", () => $("settings").close());
 $("settings").addEventListener("change", updateSettings);
 
@@ -613,6 +674,23 @@ $("celebrate").addEventListener("close", () => {
 (async function init() {
   applySettings();
   renderHome();
+
+  onAuthChange(async (user) => {
+    updateAuthUI(user);
+    if (user) {
+      const cloud = await loadFromCloud();
+      if (cloud) {
+        progress = mergeProgress(progress, cloud.progress || {});
+        shop = mergeShop(shop, cloud.shop || {});
+        saveProgress(progress);
+        saveShop(shop);
+      }
+      syncToCloud();
+      renderMascots();
+      renderHome();
+    }
+  });
+
   classifier = await loadClassifier();
   modelLoaded = true;
   renderHome();
