@@ -669,7 +669,7 @@ function finishWordSet() {
     : "Nice practice run!";
   $("coinReward").textContent = `+${coins} coins`;
   $("coinReward").hidden = false;
-  $("nextLevelBtn").hidden = true;
+  $("nextLetterBtn").hidden = true;
   confetti();
   $("celebrate").showModal();
 }
@@ -814,7 +814,13 @@ function finishLetter() {
     : "Practice makes perfect!";
   $("coinReward").textContent = `+${coins} coins`;
   $("coinReward").hidden = false;
-  $("nextLevelBtn").hidden = true;
+
+  // Show "Next letter" if there's a next unlocked+trained letter
+  const idx = ALL_LETTERS.indexOf(letter);
+  const next = ALL_LETTERS.slice(idx + 1).find(l => knows(l) && letterUnlocked(l));
+  $("nextLetterBtn").hidden = !next;
+  $("nextLetterBtn").onclick = next ? () => { goingToNextLetter = true; $("celebrate").close(); startSingleLetter(next); } : null;
+
   confetti();
   $("celebrate").showModal();
 }
@@ -878,10 +884,12 @@ $("authBtn").addEventListener("click", async () => {
 $("settingsDone").addEventListener("click", () => $("settings").close());
 $("settings").addEventListener("change", updateSettings);
 
+let goingToNextLetter = false;
 $("toLevelsBtn").addEventListener("click", () => $("celebrate").close());
 $("celebrate").addEventListener("close", () => {
   $("coinReward").hidden = true;
-  goHome();
+  if (!goingToNextLetter) goHome();
+  goingToNextLetter = false;
 });
 
 (async function init() {
