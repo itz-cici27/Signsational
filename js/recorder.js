@@ -1,6 +1,7 @@
 import { createHandTracker, startCamera, runLoop, toFeatures, drawHand } from "./hands.js";
-import { LETTERS } from "./letters.js";
-import { loadSettings, saveSettings, loadSamples, saveSamples, getItem, setItem, dayKey } from "./store.js";
+import { LETTERS, letterPhoto } from "./letters.js";
+import { loadSettings, saveSettings, loadSamples, saveSamples, getItem, setItem, dayKey, loadShop } from "./store.js";
+import { applyFlavor } from "./mascot.js";
 
 const FRAMES_PER_TAKE = 40; // samples saved per take
 const FRAME_STRIDE = 2; // keep every 2nd frame so a take spans about 3 seconds
@@ -10,6 +11,7 @@ const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let settings = loadSettings();
+applyFlavor(loadShop().flavor); // the logo takes the player's Mochi flavor
 let samples = loadSamples();
 let recording = null; // { label, person, got, tick }
 let countingDown = false;
@@ -28,7 +30,21 @@ $("letter").addEventListener("change", renderCounts);
 $("setLeft").addEventListener("change", () => {
   settings = { ...settings, leftHanded: $("setLeft").checked };
   saveSettings(settings);
+  showRef(); // the photo is mirrored for left-handed signers
 });
+
+// Reference photo of the chosen letter, so volunteers know which handshape to record.
+function showRef() {
+  const letter = $("letter").value;
+  const img = $("signImg");
+  const src = letterPhoto(letter, settings.leftHanded);
+  if (img.getAttribute("src") === src) return;
+  $("signRef").hidden = true;
+  img.onload = () => ($("signRef").hidden = false);
+  img.onerror = () => ($("signRef").hidden = true);
+  img.alt = `Reference photo of the ASL letter ${letter}`;
+  img.src = src;
+}
 
 function status(text) {
   $("recStatus").textContent = text;
@@ -44,6 +60,7 @@ function renderCounts() {
   const person = $("signer").value.trim();
   const mine = countFor(person);
   const current = $("letter").value;
+  showRef();
   $("countsTitle").textContent = person ? `${person}'s samples` : "Samples";
   $("counts").innerHTML = LETTERS.map((l) => {
     const n = mine[l] || 0;

@@ -1,8 +1,9 @@
 // Records whole-word sign clips (words-recorder.html). Entry point for that page.
 import { createHandTracker, startCamera, runLoop, drawHand } from "./hands.js";
 import { SIGN_WORDS, NONE, SIGN_FRAMES, PER_FRAME, frameInfo, sliceTake, loadWordSamples, saveWordSamples } from "./signs.js";
-import { loadSettings, saveSettings, getItem, setItem, dayKey } from "./store.js";
-import { MOTION_LETTERS, HINTS } from "./letters.js";
+import { loadSettings, saveSettings, getItem, setItem, dayKey, loadShop } from "./store.js";
+import { applyFlavor } from "./mascot.js";
+import { MOTION_LETTERS, HINTS, LETTER_VIDEOS } from "./letters.js";
 
 const TAKE_MS = 4000;
 const TARGET_PER_WORD = 40; // clips per signer: about four takes
@@ -13,6 +14,7 @@ const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let settings = loadSettings();
+applyFlavor(loadShop().flavor); // the logo takes the player's Mochi flavor
 let samples = loadWordSamples();
 let recording = null; // { label, person, start, frames }
 let countingDown = false;
@@ -34,6 +36,25 @@ $("setLeft").addEventListener("change", () => {
   saveSettings(settings);
 });
 
+// Video of the chosen sign, so volunteers know what to record. NONE has no video.
+function showRef(label) {
+  const sign = SIGN_WORDS.find((s) => s.word === label);
+  const src = sign ? sign.video : LETTER_VIDEOS[label];
+  const demo = $("demoVideo");
+  if ((demo.getAttribute("src") || null) === (src || null)) return;
+  $("signDemo").hidden = true;
+  if (!src) {
+    demo.removeAttribute("src");
+    demo.load();
+    return;
+  }
+  demo.onloadeddata = () => ($("signDemo").hidden = false);
+  demo.onerror = () => ($("signDemo").hidden = true); // offline: just leave it out
+  demo.setAttribute("aria-label", `Video of a person signing ${optionName(label)}`);
+  $("signVideo").href = sign ? `https://www.signasl.org/sign/${sign.slug}` : `https://www.signasl.org/sign/${label.toLowerCase()}`;
+  demo.src = src;
+}
+
 function status(text) {
   $("recStatus").textContent = text;
 }
@@ -49,6 +70,7 @@ function renderCounts() {
   const mine = countFor(person);
   const current = $("word").value;
   const sign = SIGN_WORDS.find((s) => s.word === current);
+  showRef(current);
   $("wordHint").textContent = sign ? sign.hint
     : MOTION_LETTERS.includes(current) ? HINTS[current]
     : "Wave, fidget, scratch your head, or hold up random letters. Include a still I and a still pointing finger, so the model learns J and Z need the motion.";

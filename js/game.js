@@ -1,6 +1,6 @@
 import { createHandTracker, startCamera, stopCamera, runLoop, toFeatures, drawHand } from "./hands.js";
 import { loadClassifier } from "./classifier.js";
-import { LETTERS, HINTS, WORD_SETS, SHOP_ITEMS, MOTION_LETTERS } from "./letters.js";
+import { LETTERS, HINTS, WORD_SETS, SHOP_ITEMS, MOTION_LETTERS, LETTER_VIDEOS, letterPhoto } from "./letters.js";
 import { NONE, SignBuffer, loadSignClassifier, SIGN_WORDS, signRewards } from "./signs.js";
 import {
   loadSettings, saveSettings, loadProgress, saveProgress, bumpStreak, currentStreak,
@@ -130,17 +130,6 @@ function currentTarget() {
   return play.queue[play.idx];
 }
 
-function signPath(letter) {
-  return `assets/signs/${settings.leftHanded ? "right" : "left"}/${letter}.jpg`;
-}
-
-// J and Z are traced in the air, so they get a looping video (ASL Signbank, via SignASL.org)
-// instead of a still photo.
-const LETTER_VIDEOS = {
-  J: "https://media.signbsl.com/videos/asl/aslsignbank/mp4/LETTER-J-1668.mp4",
-  Z: "https://media.signbsl.com/videos/asl/aslsignbank/mp4/LETTER-Z-1652.mp4",
-};
-
 function showSignRef(letter) {
   const img = $("signImg");
   const vid = $("signVid");
@@ -160,7 +149,7 @@ function showSignRef(letter) {
     img.onload = () => ($("signRef").hidden = false);
     img.onerror = () => ($("signRef").hidden = true);
     img.alt = `Reference photo of the ASL letter ${letter}`;
-    img.src = signPath(letter);
+    img.src = letterPhoto(letter, settings.leftHanded);
   }
 }
 

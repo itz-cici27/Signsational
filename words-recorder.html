@@ -4,18 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Word Recorder | Signsational</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤟</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="assets/mochi-icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600;700&display=swap">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/signs.css">
 </head>
-<body>
+<body class="garden-bg">
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="topbar">
-    <a class="brand" href="index.html"><span aria-hidden="true">🤟</span> Signsational</a>
+    <a class="brand" href="index.html" aria-label="Signsational, learn ASL. Home"><svg class="brand-mark" viewBox="0 0 200 160" aria-hidden="true" focusable="false"><g class="brand-confetti"><circle cx="30" cy="42" r="14" fill="#FFD23F"/><circle cx="172" cy="36" r="18" fill="#FF6FAE"/><circle cx="186" cy="98" r="9" fill="#CDB4F5"/><path d="M20 96Q21.8 104.2 30 106Q21.8 107.8 20 116Q18.2 107.8 10 106Q18.2 104.2 20 96zM126 7Q127.26 12.74 133 14Q127.26 15.26 126 21Q124.74 15.26 119 14Q124.74 12.74 126 7z" fill="#CDB4F5"/></g><g transform="translate(10 18)"><g class="brand-mochi"><path class="brand-body" d="M90 32C132 32 156 64 156 94C156 118 128 130 90 130C52 130 24 118 24 94C24 64 48 32 90 32z"/><path d="M90 33C86 22 76 17 66 19C70 29 80 34 90 33zM90 33C96 20 108 16 118 20C112 31 102 35 90 33z" fill="#2FA87A" stroke="#2B1B4A" stroke-width="5" stroke-linejoin="round"/><circle cx="70" cy="88" r="7" fill="#2B1B4A"/><circle cx="110" cy="88" r="7" fill="#2B1B4A"/><path d="M82 100q4 5.5 8 0q4 5.5 8 0" fill="none" stroke="#2B1B4A" stroke-width="5" stroke-linecap="round"/></g></g></svg><span class="brand-text" aria-hidden="true"><span class="brand-name">Signsational</span><span class="brand-tag">Learn ASL</span></span></a>
     <div class="topbar-right">
       <a class="btn btn-quiet" href="recorder.html">Letter recorder</a>
       <a class="btn btn-quiet" href="index.html#volunteer">Back to the game</a>
@@ -41,6 +41,10 @@
           <select id="word"></select>
         </label>
         <p class="small-note" id="wordHint"></p>
+        <figure class="sign-demo rec-ref" id="signDemo" hidden>
+          <video id="demoVideo" autoplay muted loop playsinline></video>
+          <figcaption><a class="sign-video" id="signVideo" target="_blank" rel="noopener">Video from SignASL.org</a></figcaption>
+        </figure>
         <label class="toggle"><input type="checkbox" id="setLeft"> I sign with my left hand</label>
 
         <button class="btn btn-big" id="recordBtn" type="button">Record a take</button>

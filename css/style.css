@@ -375,6 +375,7 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
 .sign-ref img, .sign-ref video { display: block; max-height: 150px; max-width: 100%; border-radius: 16px; border: 3px solid var(--ink); }
 .sign-ref video { max-height: 180px; background: #000; }
 .sign-ref [hidden] { display: none; }
+.rec-ref { margin: 0.25rem 0 1rem; }
 .mirrored { transform: scaleX(-1); }
 .hint { margin: 0; max-width: 34ch; font-size: 1.05rem; }
 .seeing { margin: 0; min-height: 1.5em; font-weight: 700; color: var(--muted); }
@@ -940,7 +941,7 @@ html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8;  --sticke
   .vol-mascot { width: 80px; }
 }
 
-/* ---------- Golden afternoon garden background (index.html, signs.html) ----------
+/* ---------- Golden afternoon garden background (index.html, signs.html, both recorders) ----------
    The painting (assets/garden.svg) stays put behind the page; the top bar and the page
    itself sit on solid white cards so everything stays easy to read. */
 body.garden-bg { background: none; }

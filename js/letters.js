@@ -5,6 +5,16 @@ export const LETTERS = "ABCDEFGHIKLMNOPQRSTUVWXY".split("");
 // (record them in words-recorder.html, then run train_words.py).
 export const MOTION_LETTERS = ["J", "Z"];
 
+// Reference photo of a still letter. The photos are mirrored for left-handed signers.
+export const letterPhoto = (letter, leftHanded) => `assets/signs/${leftHanded ? "right" : "left"}/${letter}.jpg`;
+
+// J and Z are traced in the air, so they get a looping video (ASL Signbank, via SignASL.org)
+// instead of a still photo.
+export const LETTER_VIDEOS = {
+  J: "https://media.signbsl.com/videos/asl/aslsignbank/mp4/LETTER-J-1668.mp4",
+  Z: "https://media.signbsl.com/videos/asl/aslsignbank/mp4/LETTER-Z-1652.mp4",
+};
+
 export const LEVELS = [
   { id: 1, letters: ["A", "B", "C", "D", "E"], sticker: "🌸", stickerName: "Blossom" },
   { id: 2, letters: ["F", "G", "H", "I", "J", "K"], sticker: "🐝", stickerName: "Busy Bee" },
