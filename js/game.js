@@ -114,7 +114,7 @@ function syncToCloud() {
 }
 
 function persistProgress() {
-  persistProgress();
+  saveProgress(progress);
   syncToCloud();
 }
 
@@ -536,14 +536,15 @@ function success() {
   setMascot("playMascot", "is-cheer");
   say(pick(CHEERS));
   chime();
-  progress = bumpStreak(progress);
-  persistProgress();
-  $("streakCount").textContent = currentStreak(progress);
+  // Schedule the next letter first, so a save error can never stall the game.
   setTimeout(() => {
     $("target").classList.remove("is-hit");
     if (play.mode === "word") advanceWord();
     else advance();
   }, 1100);
+  progress = bumpStreak(progress);
+  persistProgress();
+  $("streakCount").textContent = currentStreak(progress);
 }
 
 function advance() {
