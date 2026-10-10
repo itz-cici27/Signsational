@@ -67,7 +67,7 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
 }
 .brand { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
 .brand-mark { width: 2.2em; height: auto; display: block; }
-.topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+.topbar-right { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.75rem; }
 .streak {
   font-family: var(--display);
   font-weight: 600;
@@ -299,15 +299,15 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
 .mascot-stage.small { width: 88px; flex: none; }
 .mascot { width: 100%; height: auto; display: block; overflow: visible; }
 .m-shadow { fill: var(--ink); opacity: 0.12; }
-.m-blob { fill: var(--mint); stroke: var(--ink); stroke-width: 4.5; }
-.m-arm ellipse { fill: var(--mint); stroke: var(--ink); stroke-width: 4; }
+.m-blob { fill: var(--mochi, var(--mint)); stroke: var(--ink); stroke-width: 4.5; transition: fill 250ms ease; }
+.m-arm ellipse { fill: var(--mochi, var(--mint)); stroke: var(--ink); stroke-width: 4; transition: fill 250ms ease; }
 .m-gloss { fill: none; stroke: var(--white); stroke-width: 6; stroke-linecap: round; opacity: 0.75; }
 .m-sprout { fill: var(--mint-deep); stroke: var(--ink); stroke-width: 3.5; stroke-linejoin: round; }
 .m-eye { fill: var(--ink); }
 .m-shine { fill: var(--white); }
 .m-happy path { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
 .m-happy { opacity: 0; }
-.m-cheek { fill: var(--pink); opacity: 0.8; transition: opacity 250ms ease; }
+.m-cheek { fill: var(--mochi-cheek, var(--pink)); opacity: 0.8; transition: opacity 250ms ease; }
 .m-smile { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
 .m-wow { fill: var(--ink); opacity: 0; }
 .m-sparkle { fill: var(--sun); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
@@ -590,4 +590,65 @@ legend { font-weight: 700; padding: 0 0.4rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Mochi flavors (picked in Mochi's Shop) ---------- */
+html[data-flavor="matcha"] { --mochi: #9BE8C8; --mochi-cheek: #FF6FAE; }
+html[data-flavor="strawberry"] { --mochi: #FFB8D2; --mochi-cheek: #F0508F; }
+html[data-flavor="mango"] { --mochi: #FFD98A; --mochi-cheek: #FF8A65; }
+html[data-flavor="ube"] { --mochi: #CDB4F5; --mochi-cheek: #FF6FAE; }
+html[data-flavor="blueberry"] { --mochi: #A9C8FF; --mochi-cheek: #FF6FAE; }
+html[data-flavor="peach"] { --mochi: #FFC2A3; --mochi-cheek: #FF6F91; }
+html[data-flavor="vanilla"] { --mochi: #FFF3D6; --mochi-cheek: #FF8FB8; }
+html[data-flavor="sesame"] { --mochi: #C9C3D3; --mochi-cheek: #FF8FB8; }
+
+.flavor {
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  padding: 0.6rem 0.4rem;
+  min-height: 44px;
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--ink);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.flavor:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.flavor[aria-checked="true"] { outline: 4px solid var(--pink); outline-offset: 2px; }
+.flavor .flavor-swatch { width: 44px; height: auto; }
+.flavor-name { font-family: var(--display); font-weight: 600; font-size: 0.9rem; }
+
+/* Flavor tab in the top bar */
+.flavor-menu { position: relative; }
+.flavor-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.9rem 0.3rem 0.5rem; }
+.flavor-btn .flavor-swatch { width: 30px; height: auto; display: block; }
+.flavor-btn[aria-expanded="true"] { background: var(--paper); }
+.flavor-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  width: min(23rem, calc(100vw - 2rem));
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 24px;
+  padding: 1rem;
+  box-shadow: 0 6px 0 var(--ink);
+}
+.flavor-panel-title { margin: 0 0 0.75rem; font-family: var(--display); font-weight: 600; font-size: 1.1rem; }
+.flavor-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; }
+.flavor-options .flavor { box-shadow: 0 3px 0 var(--ink); padding: 0.5rem 0.25rem; }
+.flavor-options .flavor-name { font-size: 0.8rem; line-height: 1.15; text-align: center; min-width: 0; max-width: 100%; }
+.flavor-options .flavor { min-width: 0; }
+@media (max-width: 600px) {
+  .flavor-btn-label { display: none; }
+  .flavor-btn { padding: 0.3rem 0.5rem; }
+  .flavor-panel { position: fixed; top: 4.5rem; left: 1rem; right: 1rem; width: auto; }
+  .flavor-options { gap: 0.4rem; }
+  .flavor-options .flavor { padding: 0.45rem 0.1rem; }
+  .flavor-options .flavor-name { font-size: 0.72rem; }
 }

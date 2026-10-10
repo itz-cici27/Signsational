@@ -5,6 +5,25 @@
 //   "is-cheer"  success: arms up, happy ^^ eyes, hop, sparkles
 //   "is-think"  encouraging nudge: little "o" mouth, head tilt
 // Accessories are SVG snippets toggled by the shop system.
+// Flavors recolor Mochi through CSS variables (--mochi, --mochi-cheek) set on <html data-flavor>.
+
+// Free to pick. Colors live in css/style.css under html[data-flavor="..."]; `body` here is only
+// used to draw the swatch in the flavor picker.
+export const FLAVORS = [
+  { id: "matcha", name: "Matcha", body: "#9BE8C8" },
+  { id: "strawberry", name: "Strawberry", body: "#FFB8D2" },
+  { id: "mango", name: "Mango", body: "#FFD98A" },
+  { id: "ube", name: "Ube", body: "#CDB4F5" },
+  { id: "blueberry", name: "Blueberry", body: "#A9C8FF" },
+  { id: "peach", name: "Peach", body: "#FFC2A3" },
+  { id: "vanilla", name: "Vanilla", body: "#FFF3D6" },
+  { id: "sesame", name: "Black Sesame", body: "#C9C3D3" },
+];
+
+export function applyFlavor(id) {
+  const known = FLAVORS.some((f) => f.id === id);
+  document.documentElement.dataset.flavor = known ? id : "matcha";
+}
 
 const ACCESSORIES = {
   cape: `<path class="m-acc" d="M36 52c-12 18-14 42 0 50l48 0c14-8 12-32 0-50" fill="#9B59B6" stroke="var(--ink)" stroke-width="2.5" opacity="0.8"/>`,
