@@ -10,7 +10,7 @@ Built for Code Ada 2026, **Tech for Equity** track.
 
 Most deaf children are born to hearing parents, and many of those families never become
 fluent signers. ASL classes cost money and time, and free apps mostly offer videos with no
-feedback on whether you're signing correctly. Sign Language Snap gives anyone with a
+feedback on whether you're signing correctly. Signsational gives anyone with a
 webcam real-time feedback for free, so the hearing people around a Deaf person can share
 the work of communicating.
 
@@ -30,7 +30,7 @@ the work of communicating.
 The pages use JavaScript modules, so open them through a local server, not by double-clicking:
 
 ```bash
-cd sign-language-snap
+cd signsational
 python3 -m http.server 8000
 ```
 
