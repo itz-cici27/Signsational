@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Train the letter classifier for Sign Language Snap.
+Train the letter classifier for Signsational.
 
 1. Put every teammate's CSV (exported from recorder.html) in the data/ folder.
 2. Run:  python train.py
