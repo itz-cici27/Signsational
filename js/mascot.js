@@ -1,5 +1,9 @@
-// Mochi, the cheering mascot. States are CSS classes on the wrapper:
-// "" (idle), "is-cheer" (arms up, hop), "is-think" (little "o" mouth).
+// Mochi, the cheering mascot: a squishy mint rice cake with big sparkly eyes.
+// States are CSS classes on the wrapper (see setMascot in game.js):
+//   ""          idle: bobs gently and blinks
+//   "is-close"  the learner is almost there: wide eyes, sparkles, little wiggle
+//   "is-cheer"  success: arms up, happy ^^ eyes, hop, sparkles
+//   "is-think"  encouraging nudge: little "o" mouth, head tilt
 // Accessories are SVG snippets toggled by the shop system.
 
 const ACCESSORIES = {
@@ -61,29 +65,54 @@ const ACCESSORIES = {
 const BEHIND = ["cape"];
 const ON_TOP = ["scarf", "star", "sunglasses", "bow", "partyhat", "flower", "crown"];
 
+// Accessories are drawn for the original 120x112 Mochi. FIT maps them onto the bigger,
+// cuter body (180x150); a few get their own fit so they land on the eyes, chin, etc.
+const FIT = "translate(6 4) scale(1.4)";
+const FIT_FOR = {
+  sunglasses: "translate(12.6 8) scale(1.29)",
+  scarf: "translate(6 -6) scale(1.4)",
+  star: "translate(18 -3) scale(1.2)",
+  cape: "translate(-12 4) scale(1.7 1.3)",
+};
+const wear = (id) => `<g transform="${FIT_FOR[id] || FIT}">${ACCESSORIES[id]}</g>`;
+
 export function mascotSVG(equipped = []) {
   const has = (id) => equipped.includes(id);
-  const behind = BEHIND.filter(has).map(id => ACCESSORIES[id]).join("\n    ");
-  const onTop = ON_TOP.filter(has).map(id => ACCESSORIES[id]).join("\n    ");
+  const behind = BEHIND.filter(has).map(wear).join("\n    ");
+  const onTop = ON_TOP.filter(has).map(wear).join("\n    ");
 
   return `
-<svg class="mascot" viewBox="0 0 120 112" aria-hidden="true" focusable="false">
-  <ellipse class="m-shadow" cx="60" cy="106" rx="34" ry="5"/>
+<svg class="mascot" viewBox="0 0 180 150" aria-hidden="true" focusable="false">
+  <ellipse class="m-shadow" cx="90" cy="140" rx="54" ry="6"/>
   <g class="m-body">
     ${behind}
-    <g class="m-arm m-arm-l"><ellipse cx="22" cy="72" rx="9" ry="14"/></g>
-    <g class="m-arm m-arm-r"><ellipse cx="98" cy="72" rx="9" ry="14"/></g>
-    <path class="m-blob" d="M60 20c28 0 44 22 44 48 0 22-18 34-44 34S16 90 16 68c0-26 16-48 44-48z"/>
-    <path class="m-sprout" d="M60 20c-2-9 3-15 11-16-1 8-5 13-11 16z"/>
-    <circle class="m-eye" cx="46" cy="62" r="5.5"/>
-    <circle class="m-eye" cx="74" cy="62" r="5.5"/>
-    <circle class="m-shine" cx="48" cy="60" r="1.8"/>
-    <circle class="m-shine" cx="76" cy="60" r="1.8"/>
-    <ellipse class="m-cheek" cx="35" cy="74" rx="6.5" ry="3.5"/>
-    <ellipse class="m-cheek" cx="85" cy="74" rx="6.5" ry="3.5"/>
-    <path class="m-mouth m-smile" d="M52 74q8 8 16 0"/>
-    <ellipse class="m-wow" cx="60" cy="77" rx="4" ry="5"/>
+    <g class="m-arm m-arm-l"><ellipse cx="26" cy="102" rx="9" ry="12"/></g>
+    <g class="m-arm m-arm-r"><ellipse cx="154" cy="102" rx="9" ry="12"/></g>
+    <path class="m-blob" d="M90 32C132 32 156 64 156 94C156 118 128 130 90 130C52 130 24 118 24 94C24 64 48 32 90 32z"/>
+    <path class="m-gloss" d="M54 60C62 48 74 43 84 42"/>
+    <path class="m-sprout" d="M90 33C86 22 76 17 66 19C70 29 80 34 90 33z"/>
+    <path class="m-sprout" d="M90 33C96 20 108 16 118 20C112 31 102 35 90 33z"/>
+    <g class="m-eyes">
+      <ellipse class="m-eye" cx="70" cy="88" rx="7.5" ry="9"/>
+      <ellipse class="m-eye" cx="110" cy="88" rx="7.5" ry="9"/>
+      <circle class="m-shine" cx="72.8" cy="84" r="3"/>
+      <circle class="m-shine" cx="112.8" cy="84" r="3"/>
+      <circle class="m-shine" cx="67.6" cy="92" r="1.4"/>
+      <circle class="m-shine" cx="107.6" cy="92" r="1.4"/>
+    </g>
+    <g class="m-happy">
+      <path d="M62 90q8-10 16 0"/>
+      <path d="M102 90q8-10 16 0"/>
+    </g>
+    <ellipse class="m-cheek" cx="54" cy="102" rx="9.5" ry="5.5"/>
+    <ellipse class="m-cheek" cx="126" cy="102" rx="9.5" ry="5.5"/>
+    <path class="m-mouth m-smile" d="M82 99q4 5.5 8 0q4 5.5 8 0"/>
+    <ellipse class="m-wow" cx="90" cy="102" rx="4" ry="5"/>
     ${onTop}
+  </g>
+  <g class="m-sparkles">
+    <path class="m-sparkle m-sparkle-1" d="M24 22l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/>
+    <path class="m-sparkle m-sparkle-2" d="M158 30l2.4 5.6 5.6 2.4-5.6 2.4-2.4 5.6-2.4-5.6-5.6-2.4 5.6-2.4z"/>
   </g>
 </svg>`;
 }

@@ -15,13 +15,31 @@ const STRICTNESS = {
   strict: { conf: 0.85, hold: 18 },
 };
 const RING = 2 * Math.PI * 54;
-const CHEERS = ["You got it!", "Beautiful sign!", "Nailed it!", "So clean!", "Yes! On to the next one."];
-const NUDGES = [
-  "Take your time. There's no timer.",
-  "Try the hint below the letter.",
-  "Move your hand a little closer to the camera.",
-  "Almost there. Check your thumb position.",
+const CHEERS = [
+  "Good job!", "You got it!", "Beautiful sign!", "Nailed it!", "So clean!",
+  "Yes! On to the next one.", "Wow, you're a natural!", "Mochi is so proud of you!",
 ];
+// The model is starting to see the target letter.
+const CLOSE = [
+  "Ooh, that's really close!", "So close! Keep going.", "You're right there!",
+  "Almost! Just a tiny tweak.", "Getting warmer!",
+];
+// The ring is more than half full: they just need to hold still.
+const HOLDING = ["Yes! Hold it right there…", "That's it, keep holding!", "Looking great, stay still!"];
+const NUDGES = [
+  "Good try! Take your time. There's no timer.",
+  "Nice effort! Peek at the hint below the letter.",
+  "Try moving your hand a little closer to the camera.",
+  "You're learning! Check where your thumb is.",
+  "Every try counts. You've got this!",
+];
+const SKIPS = ["No worries! We'll come back to it.", "Good call. We'll try that one again later."];
+
+// Mochi's mood -> mascot class. Speech changes at most every MOOD_GAP ms so it doesn't flicker.
+const MOOD_CLASS = { idle: "", close: "is-close", holding: "is-close", nudge: "is-think", cheer: "is-cheer" };
+const MOOD_GAP = 1500;
+// Minimum belief in the target letter that counts as "close", even if another letter is winning.
+const CLOSE_CONF = 0.3;
 
 const $ = (id) => document.getElementById(id);
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -43,6 +61,7 @@ const play = {
   busy: false, letterStart: 0, lastNudge: 0,
   mode: "level", // "level" or "word"
   wordSet: null, wordPos: 0,
+  mood: "idle", moodAt: 0, lastClose: 0,
 };
 
 function renderMascots() {
@@ -73,7 +92,22 @@ function setMascot(id, state) {
 }
 
 function say(text) {
-  $("playBubble").textContent = text;
+  const bubble = $("playBubble");
+  bubble.textContent = text;
+  bubble.classList.remove("is-pop");
+  void bubble.offsetWidth; // restart the pop animation
+  bubble.classList.add("is-pop");
+}
+
+// Change Mochi's mood (face + speech bubble). `force` skips the anti-flicker delay.
+function setMood(mood, lines, force = false) {
+  const now = performance.now();
+  if (mood === play.mood && !force) return;
+  if (!force && now - play.moodAt < MOOD_GAP) return;
+  play.mood = mood;
+  play.moodAt = now;
+  setMascot("playMascot", MOOD_CLASS[mood]);
+  if (lines) say(typeof lines === "string" ? lines : pick(lines));
 }
 
 function setRing(fraction) {
@@ -385,8 +419,9 @@ function showLetter() {
   img.src = signPath(letter);
 
   setRing(0);
-  setMascot("playMascot", "");
-  say(`Show me the letter ${letter}.`);
+  play.mood = "";
+  play.lastClose = 0;
+  setMood("idle", `Show me the letter ${letter}.`, true);
 }
 
 // ---------- word challenges ----------
@@ -447,8 +482,9 @@ function showWordLetter() {
   img.src = signPath(letter);
 
   setRing(0);
-  setMascot("playMascot", "");
-  say(`Spell "${word}" \u2014 show me ${letter}.`);
+  play.mood = "";
+  play.lastClose = 0;
+  setMood("idle", `Spell "${word}" \u2014 show me ${letter}.`, true);
 }
 
 function advanceWord() {
@@ -508,13 +544,17 @@ function onFrame(lm) {
     return;
   }
 
-  const { label, conf } = classifier.predict(toFeatures(lm, aspect, settings.leftHanded));
+  const { label, conf, targetConf } = classifier.predict(toFeatures(lm, aspect, settings.leftHanded), target);
+  const close = label === target || targetConf >= CLOSE_CONF;
   $("seeing").textContent =
-    label === target ? `That looks like ${label}. Hold it!` : `Right now that looks like ${label}.`;
+    label === target ? `That's ${label}! Hold it!`
+    : close ? `Close! It's somewhere between ${target} and ${label}.`
+    : `Right now that looks like ${label}.`;
 
   if (label === target && conf >= rule.conf) play.hold += 1;
   else play.hold = Math.max(0, play.hold - 2);
-  setRing(play.hold / rule.hold);
+  const filled = play.hold / rule.hold;
+  setRing(filled);
 
   if (play.hold >= rule.hold) {
     success();
@@ -522,10 +562,18 @@ function onFrame(lm) {
   }
 
   const now = performance.now();
-  if (now - play.letterStart > 12000 && now - play.lastNudge > 9000) {
+  if (close) play.lastClose = now;
+
+  if (filled >= 0.5) {
+    setMood("holding", HOLDING);
+  } else if (close) {
+    setMood("close", CLOSE);
+  } else if (now - play.letterStart > 12000 && now - play.lastNudge > 9000) {
     play.lastNudge = now;
-    say(pick(NUDGES));
-    setMascot("playMascot", "is-think");
+    setMood("nudge", NUDGES, true);
+  } else if (play.mood !== "nudge" && now - play.lastClose > 2500) {
+    // drifted away from the sign: relax Mochi's face, keep the last words up
+    setMood("idle");
   }
 }
 
@@ -533,8 +581,7 @@ function success() {
   play.busy = true;
   setRing(1);
   $("target").classList.add("is-hit");
-  setMascot("playMascot", "is-cheer");
-  say(pick(CHEERS));
+  setMood("cheer", CHEERS, true);
   chime();
   // Schedule the next letter first, so a save error can never stall the game.
   setTimeout(() => {
@@ -571,6 +618,7 @@ function skipLetter() {
       play.queue.push(letter);
     }
     advance();
+    if (!play.busy) say(`${pick(SKIPS)} Now show me ${play.queue[play.idx]}.`);
   }
 }
 

@@ -37,11 +37,14 @@ export class MLP {
     return softmax(h);
   }
 
-  predict(x) {
+  // `target` is optional: when given, also returns how much the model believes it's the target
+  // letter (used for "so close!" encouragement even when another letter is winning).
+  predict(x, target) {
     const p = this.probabilities(x);
     let best = 0;
     for (let i = 1; i < p.length; i++) if (p[i] > p[best]) best = i;
-    return { label: this.labels[best], conf: p[best] };
+    const t = this.labels.indexOf(target);
+    return { label: this.labels[best], conf: p[best], targetConf: t >= 0 ? p[t] : 0 };
   }
 }
 
@@ -54,7 +57,7 @@ export class KNN {
     this.labels = [...new Set(this.y)].sort();
   }
 
-  predict(x) {
+  predict(x, target) {
     const nearest = []; // [distance, index], kept sorted, at most k long
     for (let n = 0; n < this.X.length; n++) {
       const row = this.X[n];
@@ -79,7 +82,8 @@ export class KNN {
         count = v;
       }
     }
-    return { label, conf: nearest.length ? count / nearest.length : 0 };
+    const n = nearest.length;
+    return { label, conf: n ? count / n : 0, targetConf: n ? (votes[target] || 0) / n : 0 };
   }
 }
 

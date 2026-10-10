@@ -65,7 +65,8 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
   justify-content: space-between;
   gap: 1rem;
 }
-.brand { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-decoration: none; }
+.brand { font-family: var(--display); font-weight: 700; font-size: 1.35rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.brand-mark { width: 2.2em; height: auto; display: block; }
 .topbar-right { display: flex; align-items: center; gap: 0.75rem; }
 .streak {
   font-family: var(--display);
@@ -298,23 +299,54 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
 .mascot-stage.small { width: 88px; flex: none; }
 .mascot { width: 100%; height: auto; display: block; overflow: visible; }
 .m-shadow { fill: var(--ink); opacity: 0.12; }
-.m-blob, .m-arm ellipse { fill: var(--mint); stroke: var(--ink); stroke-width: 3; }
-.m-sprout { fill: var(--mint-deep); stroke: var(--ink); stroke-width: 2.5; }
+.m-blob { fill: var(--mint); stroke: var(--ink); stroke-width: 4.5; }
+.m-arm ellipse { fill: var(--mint); stroke: var(--ink); stroke-width: 4; }
+.m-gloss { fill: none; stroke: var(--white); stroke-width: 6; stroke-linecap: round; opacity: 0.75; }
+.m-sprout { fill: var(--mint-deep); stroke: var(--ink); stroke-width: 3.5; stroke-linejoin: round; }
 .m-eye { fill: var(--ink); }
 .m-shine { fill: var(--white); }
-.m-cheek { fill: var(--pink); opacity: 0.75; }
-.m-smile { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+.m-happy path { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+.m-happy { opacity: 0; }
+.m-cheek { fill: var(--pink); opacity: 0.8; transition: opacity 250ms ease; }
+.m-smile { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
 .m-wow { fill: var(--ink); opacity: 0; }
-.m-arm { transform-box: fill-box; transform-origin: 50% 8%; transition: transform 250ms ease; }
-.m-body { transform-box: fill-box; transform-origin: 50% 100%; animation: bob 3.2s ease-in-out infinite; }
-@keyframes bob { 50% { transform: translateY(-3px); } }
+.m-sparkle { fill: var(--sun); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.m-sparkle-2 { fill: var(--pink); }
+.m-sparkles { opacity: 0; transition: opacity 250ms ease; }
+.m-sparkle { transform-box: fill-box; transform-origin: center; }
 
-.is-cheer .m-arm-l { transform: rotate(145deg); }
-.is-cheer .m-arm-r { transform: rotate(-145deg); }
-.is-cheer .m-body { animation: hop 0.45s ease 2; }
+.m-arm { transform-box: fill-box; transform-origin: 50% 15%; transition: transform 250ms ease; }
+.m-body { transform-box: fill-box; transform-origin: 50% 100%; animation: bob 3.2s ease-in-out infinite; transition: transform 250ms ease; }
+.m-eyes { transform-box: fill-box; transform-origin: center; animation: blink 4.5s infinite; }
+@keyframes bob { 50% { transform: translateY(-3px); } }
+@keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+@keyframes twinkle { 50% { transform: scale(0.6) rotate(20deg); } }
+@keyframes wiggle { 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
 @keyframes hop { 50% { transform: translateY(-10px) scale(1.04, 0.97); } }
+
+/* almost there: wide sparkly eyes and a hopeful wiggle */
+.is-close .m-eyes { animation: none; transform: scale(1.15); }
+.is-close .m-body { animation: wiggle 0.9s ease-in-out infinite; }
+.is-close .m-sparkles { opacity: 1; }
+.is-close .m-sparkle { animation: twinkle 0.9s ease-in-out infinite; }
+.is-close .m-cheek { opacity: 1; }
+
+/* success: arms up, happy ^^ eyes */
+.is-cheer .m-arm-l { transform: rotate(130deg); }
+.is-cheer .m-arm-r { transform: rotate(-130deg); }
+.is-cheer .m-body { animation: hop 0.45s ease 2; }
+.is-cheer .m-eyes { opacity: 0; animation: none; }
+.is-cheer .m-happy { opacity: 1; }
+.is-cheer .m-sparkles { opacity: 1; }
+.is-cheer .m-sparkle { animation: twinkle 0.6s ease-in-out 3; }
+
+/* gentle nudge: little "o" mouth and a curious tilt */
 .is-think .m-smile { opacity: 0; }
 .is-think .m-wow { opacity: 1; }
+.is-think .m-body { animation: none; transform: rotate(-6deg); }
+
+.bubble.is-pop { animation: pop 0.3s ease; }
+@keyframes pop { 50% { transform: scale(1.04); } }
 
 /* ---------- dialogs ---------- */
 dialog {
