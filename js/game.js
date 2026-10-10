@@ -177,17 +177,15 @@ function mergeShop(local, cloud) {
 }
 
 function updateAuthUI(user) {
-  $("signInBtn").hidden = !!user;
-  $("userInfo").hidden = !user;
+  const btn = $("authBtn");
+  const avatar = $("userAvatar");
   if (user) {
-    $("userName").textContent = user.displayName || "Signed in";
-    const avatar = $("userAvatar");
-    if (user.photoURL) {
-      avatar.src = user.photoURL;
-      avatar.hidden = false;
-    } else {
-      avatar.hidden = true;
-    }
+    btn.textContent = "Sign out";
+    if (user.photoURL) { avatar.src = user.photoURL; avatar.hidden = false; }
+    else { avatar.hidden = true; }
+  } else {
+    btn.textContent = "Sign in";
+    avatar.hidden = true;
   }
 }
 
@@ -698,12 +696,15 @@ $("continueBtn").addEventListener("click", () => {
 $("backBtn").addEventListener("click", goHome);
 $("skipBtn").addEventListener("click", skipLetter);
 $("settingsBtn").addEventListener("click", openSettings);
-$("signInBtn").addEventListener("click", async () => {
-  try { await signIn(); } catch (err) {
-    if (err.code !== "auth/popup-closed-by-user") console.error("Sign-in failed:", err);
+$("authBtn").addEventListener("click", async () => {
+  if (currentUser()) {
+    signOutUser();
+  } else {
+    try { await signIn(); } catch (err) {
+      if (err.code !== "auth/popup-closed-by-user") console.error("Sign-in failed:", err);
+    }
   }
 });
-$("signOutBtn").addEventListener("click", () => signOutUser());
 $("settingsDone").addEventListener("click", () => $("settings").close());
 $("settings").addEventListener("change", updateSettings);
 

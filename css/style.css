@@ -427,21 +427,12 @@ legend { font-weight: 700; padding: 0 0.4rem; }
 .tips li { margin-bottom: 0.4rem; }
 
 /* ---------- auth ---------- */
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
 .avatar {
   width: 28px;
   height: 28px;
   border-radius: 50%;
   border: 2px solid var(--ink);
 }
-.btn-sm { font-size: 0.85rem; padding: 0.35rem 0.8rem; }
 
 /* ---------- coins ---------- */
 .coins {
