@@ -131,7 +131,6 @@ function currentTarget() {
 
 function signPath(letter) {
   return `assets/signs/${settings.leftHanded ? "right" : "left"}/${letter}.jpg`;
-}/${letter}.jpg`;
 }
 
 // J and Z are traced in the air, so they get a looping video (ASL Signbank, via SignASL.org)
