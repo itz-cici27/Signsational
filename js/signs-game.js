@@ -1,7 +1,7 @@
 // Play screen for whole-word signs (signs.html). Entry point: signs.html?word=HELLO
 import { createHandTracker, startCamera, runLoop, drawHand } from "./hands.js";
 import { SIGN_WORDS, NONE, SignBuffer, loadSignClassifier, signRewards } from "./signs.js";
-import { loadSettings, loadProgress, saveProgress, bumpStreak, currentStreak, loadShop } from "./store.js";
+import { loadSettings, loadProgress, saveProgress, bumpStreak, currentStreak, loadShop, recordStat } from "./store.js";
 import { mascotSVG, applyFlavor } from "./mascot.js";
 import { stickerStats, newStickers, stickerSVG } from "./stickers.js";
 
@@ -34,6 +34,24 @@ let aspect = 4 / 3;
 let frameNo = 0;
 let audioCtx = null;
 const play = { queue: [], idx: 0, hold: 0, busy: true, start: 0, lastNudge: 0 };
+
+// Opened from the Review tab (signs.html?words=PLEASE,SORRY&from=review): play just those
+// words once, then go back to Review.
+const params = new URLSearchParams(location.search);
+const fromReview = params.get("from") === "review";
+const reviewWords = (params.get("words") || "").split(",").filter(Boolean);
+if (fromReview) {
+  document.querySelectorAll('a[href="index.html#signWordsTitle"]').forEach((a) => {
+    a.href = "index.html#review";
+    a.textContent = "Back to review";
+  });
+}
+
+// Time (or skip) for this sign, for the Review tab's "Worst to Best" piles.
+function recordSignStat(word, skipped) {
+  const secs = Math.max(0.5, (performance.now() - play.start) / 1000);
+  recordStat(progress.signStats ||= {}, word, skipped, secs);
+}
 
 document.documentElement.classList.toggle("big-text", settings.bigText);
 applyFlavor(loadShop().flavor);
@@ -82,7 +100,7 @@ function showSign() {
   play.busy = false;
   play.start = play.lastNudge = performance.now();
   buffer.clear();
-  history.replaceState(null, "", `?word=${encodeURIComponent(s.word)}`);
+  if (!fromReview) history.replaceState(null, "", `?word=${encodeURIComponent(s.word)}`);
   $("wordCount").textContent = `${play.idx + 1} of ${play.queue.length}`;
   $("targetEmoji").textContent = s.emoji;
   $("signName").textContent = s.word;
@@ -99,6 +117,10 @@ function showSign() {
 }
 
 function nextSign() {
+  if (fromReview && play.idx === play.queue.length - 1) {
+    location.href = "index.html#review";
+    return;
+  }
   play.idx = (play.idx + 1) % play.queue.length;
   showSign();
 }
@@ -153,6 +175,7 @@ function success() {
   const coins = signRewards(!firstTime);
   const statsBefore = stickerStats(progress);
   if (firstTime) progress.signsCompleted = [...done, s.word];
+  recordSignStat(s.word, false);
   progress.wordsSigned = statsBefore.words + 1; // every completed word counts toward word stickers
   const earned = newStickers(statsBefore, stickerStats(progress));
   progress.coins = (progress.coins || 0) + coins;
@@ -192,7 +215,13 @@ function confetti(emoji) {
   }
 }
 
-$("skipBtn").addEventListener("click", () => !play.busy && nextSign());
+$("skipBtn").addEventListener("click", () => {
+  if (play.busy) return;
+  progress = loadProgress(); // re-read in case another tab changed it
+  recordSignStat(play.queue[play.idx].word, true);
+  saveProgress(progress);
+  nextSign();
+});
 $("nextBtn").addEventListener("click", () => $("celebrate").close());
 $("celebrate").addEventListener("close", nextSign);
 
@@ -200,6 +229,10 @@ $("celebrate").addEventListener("close", nextSign);
   renderHeader();
   classifier = await loadSignClassifier();
   play.queue = classifier ? SIGN_WORDS.filter((s) => classifier.labels.includes(s.word)) : [];
+  if (fromReview && reviewWords.length) {
+    const pile = reviewWords.map((w) => play.queue.find((s) => s.word === w)).filter(Boolean);
+    if (pile.length) play.queue = pile;
+  }
   if (!play.queue.length) {
     $("signName").textContent = "No word model yet";
     $("hint").innerHTML = 'Record words in the <a href="words-recorder.html">word recorder</a>, then run <code>python train_words.py</code>.';
@@ -207,7 +240,7 @@ $("celebrate").addEventListener("close", nextSign);
     $("signDemo").hidden = true;
     return;
   }
-  const wanted = new URLSearchParams(location.search).get("word");
+  const wanted = params.get("word");
   play.idx = Math.max(0, play.queue.findIndex((s) => s.word === wanted));
   showSign();
 
@@ -221,6 +254,7 @@ $("celebrate").addEventListener("close", nextSign);
     $("overlay").width = video.videoWidth;
     $("overlay").height = video.videoHeight;
     $("camStatus").textContent = "";
+    play.start = play.lastNudge = performance.now(); // camera start-up time shouldn't count as slow
     runLoop(video, tracker, onFrame);
   } catch (err) {
     console.error(err);

@@ -50,6 +50,28 @@ function yesterdayKey() {
   return dayKey(d);
 }
 
+// ---------- practice stats ----------
+// For each letter or sign word: a running average of how long it takes to sign and how
+// often it's skipped. Recent attempts count most, so something you've since mastered
+// stops looking hard. Used by the Review tab's "Worst to Best" piles.
+const STAT_WEIGHT = 0.3; // how much the newest attempt moves the averages
+const SKIP_PENALTY = 10; // skipped every time adds 10 to the difficulty
+
+export function recordStat(stats, key, skipped, secs) {
+  const s = stats[key] ||= { attempts: 0, avgTime: 0, skipRate: 0 };
+  if (s.skipRate == null) s.skipRate = s.attempts ? (s.skips || 0) / s.attempts : 0; // older stats format
+  const first = s.attempts === 0;
+  s.attempts += 1;
+  s.skipRate = first ? +skipped : s.skipRate + STAT_WEIGHT * (+skipped - s.skipRate);
+  if (!skipped) s.avgTime = s.avgTime ? s.avgTime + STAT_WEIGHT * (secs - s.avgTime) : secs;
+}
+
+// Roughly "seconds to sign", plus a penalty for skipping. 0 if never tried.
+export function statDifficulty(s) {
+  if (!s || !s.attempts) return 0;
+  return (s.avgTime || 0) + SKIP_PENALTY * (s.skipRate || 0);
+}
+
 // Call when the learner gets a letter right.
 export function bumpStreak(p) {
   const today = dayKey();

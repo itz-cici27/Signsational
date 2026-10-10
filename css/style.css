@@ -1069,6 +1069,10 @@ body.garden-bg::before {
 .deck-card b { font-family: var(--display); font-weight: 700; font-size: 1.5rem; line-height: 1; }
 .deck-cards.is-crowded .deck-card { padding-left: 5px; }
 .deck-cards.is-crowded .deck-card b { font-size: 1.2rem; }
+.deck-emoji { display: block; font-size: 2rem; line-height: 1; margin: 2px 0 0 -2px; }
+.deck-names { font-family: var(--display); font-weight: 600; font-size: 0.95rem; letter-spacing: 0.03em; }
+.tier-group + .tier-group { margin-top: 1.5rem; }
+.tier-group-title { margin: 0 0 0.6rem; font-family: var(--display); font-weight: 600; font-size: 1rem; color: var(--muted); }
 .deck-card.is-top { border-color: var(--accent); box-shadow: 0 3px 0 var(--accent); }
 .deck-card.is-top b { color: var(--accent); }
 .deck:hover .deck-card.is-top { transform: rotate(calc((var(--i) - (var(--n) - 1) / 2) * 3deg)) translateY(-6px); }

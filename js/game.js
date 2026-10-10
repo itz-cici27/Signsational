@@ -1,10 +1,11 @@
 import { createHandTracker, startCamera, stopCamera, runLoop, toFeatures, drawHand } from "./hands.js";
 import { loadClassifier } from "./classifier.js";
 import { LETTERS, HINTS, WORD_SETS, SHOP_ITEMS, MOTION_LETTERS } from "./letters.js";
-import { NONE, SignBuffer, loadSignClassifier } from "./signs.js";
+import { NONE, SignBuffer, loadSignClassifier, SIGN_WORDS, signRewards } from "./signs.js";
 import {
   loadSettings, saveSettings, loadProgress, saveProgress, bumpStreak, currentStreak,
   loadShop, saveShop,
+  recordStat, statDifficulty,
 } from "./store.js";
 import { mascotSVG, applyFlavor } from "./mascot.js";
 import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud, getLeaderboard, ensureLeaderboardEntry } from "./firebase.js";
@@ -279,6 +280,7 @@ function mergeProgress(local, cloud) {
     wordsSigned: Math.max(local.wordsSigned || 0, cloud.wordsSigned || 0),
     coins: Math.max(local.coins || 0, cloud.coins || 0),
     stats: mergeStats(local.stats, cloud.stats),
+    signStats: mergeStats(local.signStats, cloud.signStats),
     streak: (local.lastDay || "") >= (cloud.lastDay || "") ? local.streak : cloud.streak,
     lastDay: (local.lastDay || "") >= (cloud.lastDay || "") ? local.lastDay : cloud.lastDay,
   };
@@ -414,37 +416,18 @@ function startSingleWord(word) {
 }
 
 // ---------- practice stats & difficulty ----------
-// Each letter keeps a running average of how long it takes to sign and how often it's
-// skipped. Recent attempts count most, so a letter you've since mastered stops being
-// flagged. Difficulty is roughly "seconds to sign", plus a penalty for skipping.
-const STAT_WEIGHT = 0.3;       // how much the newest attempt moves the averages
-const SKIP_PENALTY = 10;       // a letter skipped every time scores +10
-const NEEDS_PRACTICE_AT = 8;   // difficulty above this gets the "Needs practice" flag
+// Timing and skips per letter (see recordStat in store.js).
+const NEEDS_PRACTICE_AT = 8; // difficulty above this gets the "Needs practice" flag
 
 function recordLetterStat(letter, skipped) {
   if (!letter) return;
-  if (!progress.stats) progress.stats = {};
-  const s = progress.stats[letter] ||= { attempts: 0, avgTime: 0, skipRate: 0 };
-  if (s.skipRate == null) s.skipRate = s.attempts ? (s.skips || 0) / s.attempts : 0; // older stats format
-  const first = s.attempts === 0;
-  s.attempts += 1;
-  s.skipRate = first ? +skipped : s.skipRate + STAT_WEIGHT * (+skipped - s.skipRate);
-  if (!skipped) {
-    const secs = Math.max(0.5, (performance.now() - play.letterStart) / 1000);
-    s.avgTime = s.avgTime ? s.avgTime + STAT_WEIGHT * (secs - s.avgTime) : secs;
-  }
+  const secs = Math.max(0.5, (performance.now() - play.letterStart) / 1000);
+  recordStat(progress.stats ||= {}, letter, skipped, secs);
   persistProgress();
 }
 
-function difficulty(letter) {
-  const s = progress.stats?.[letter];
-  if (!s || !s.attempts) return 0;
-  return (s.avgTime || 0) + SKIP_PENALTY * (s.skipRate || 0);
-}
-
-function needsPractice(letter) {
-  return difficulty(letter) > NEEDS_PRACTICE_AT;
-}
+const difficulty = (letter) => statDifficulty(progress.stats?.[letter]);
+const needsPractice = (letter) => difficulty(letter) > NEEDS_PRACTICE_AT;
 
 // ---------- review tab ----------
 function renderReview() {
@@ -474,12 +457,13 @@ function renderReview() {
   }
 
   const reviewWordGrid = $("reviewWords");
-  const completedWords = WORD_SETS.flatMap((ws) => ws.words).filter(wordDone);
-  if (completedWords.length === 0) {
+  const completedWords = [...new Set(WORD_SETS.flatMap((ws) => ws.words).filter(wordDone))];
+  const completedSigns = SIGN_WORDS.filter((s) => (progress.signsCompleted || []).includes(s.word));
+  if (completedWords.length === 0 && completedSigns.length === 0) {
     reviewWordGrid.innerHTML = '<p class="empty-state">No words completed yet.</p>';
   } else {
     reviewWordGrid.innerHTML = "";
-    [...new Set(completedWords)].forEach(word => {
+    completedWords.forEach(word => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "word-card is-done";
@@ -490,22 +474,34 @@ function renderReview() {
       btn.addEventListener("click", () => { returnTab = "review"; startSingleWord(word); });
       reviewWordGrid.append(btn);
     });
+    // Sign words (HELLO, PLEASE, ...) are played on their own page.
+    completedSigns.forEach(({ word, emoji }) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "word-card is-done";
+      btn.innerHTML = `
+        <span class="word-card-word"><span aria-hidden="true">${emoji}</span> ${word}</span>
+        <span class="word-card-status">Sign word</span>
+        <span class="word-card-coins">${COIN} ${signRewards(true)}</span>`;
+      btn.addEventListener("click", () => (location.href = signPageUrl([word])));
+      reviewWordGrid.append(btn);
+    });
   }
   renderSlowestStacks();
 }
 
-// ---------- review: letters sorted worst to best ----------
+// ---------- review: worst to best ----------
 const TIERS = [
   { id: "worst", label: "Worst", blurb: "Practice these first" },
   { id: "medium", label: "Medium", blurb: "Getting there" },
   { id: "best", label: "Best", blurb: "You've got these" },
 ];
 
-// Learned letters that have been timed, hardest first, split into thirds.
-function letterTiers() {
-  const ranked = (progress.lettersCompleted || [])
-    .filter((l) => knows(l) && progress.stats?.[l]?.attempts)
-    .sort((a, b) => difficulty(b) - difficulty(a));
+// The keys that have been timed, hardest first, split into thirds.
+function rankTiers(keys, stats) {
+  const ranked = keys
+    .filter((k) => stats?.[k]?.attempts)
+    .sort((a, b) => statDifficulty(stats[b]) - statDifficulty(stats[a]));
   const count = Math.min(TIERS.length, ranked.length);
   const tiers = [];
   for (let i = 0, start = 0; i < count; i++) {
@@ -513,26 +509,24 @@ function letterTiers() {
     tiers.push(ranked.slice(start, end));
     start = end;
   }
-  // With fewer than three letters, keep "Worst" and "Best" rather than "Worst" and "Medium".
+  // With fewer than three, keep "Worst" and "Best" rather than "Worst" and "Medium".
   const kinds = count === 2 ? [TIERS[0], TIERS[2]] : TIERS;
-  return tiers.map((letters, i) => ({ ...kinds[i], letters }));
+  return tiers.map((keys, i) => ({ ...kinds[i], keys }));
 }
 
-function renderSlowestStacks() {
-  const tiers = letterTiers();
-  $("reviewStacks").hidden = !tiers.length;
-  const list = $("reviewStackList");
+// Draws one row of piles. face(key) is what's printed on that key's card.
+function renderTiers(list, tiers, stats, { face, start, unit, names = false }) {
   list.innerHTML = "";
-  tiers.forEach(({ id, label, blurb, letters }) => {
-    const times = letters.map((l) => progress.stats[l].avgTime).filter(Boolean);
+  tiers.forEach(({ id, label, blurb, keys }) => {
+    const times = keys.map((k) => stats[k].avgTime).filter(Boolean);
     const avg = times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0;
-    const meta = `${letters.length} letter${letters.length === 1 ? "" : "s"}${avg ? ` \u00B7 ${avg.toFixed(1)}s avg` : ""}`;
+    const meta = `${keys.length} ${unit}${keys.length === 1 ? "" : "s"} \u00B7 ${avg ? `${avg.toFixed(1)}s avg` : "skipped so far"}`;
 
-    // A pile of letter cards, worst on top: the easiest letter is at the back (left)
-    // and the hardest is the front card. Bigger piles overlap more so they still fit.
-    const step = letters.length <= 5 ? 40 : Math.max(20, Math.floor(165 / (letters.length - 1)));
-    const cards = [...letters].reverse()
-      .map((l, k) => `<span class="deck-card${k === letters.length - 1 ? " is-top" : ""}" style="--i:${k}"><b>${l}</b></span>`)
+    // A pile of cards, worst on top: the easiest is at the back (left) and the hardest
+    // is the front card. Bigger piles overlap more so they still fit.
+    const step = keys.length <= 5 ? 40 : Math.max(20, Math.floor(165 / (keys.length - 1)));
+    const cards = [...keys].reverse()
+      .map((k, i) => `<span class="deck-card${i === keys.length - 1 ? " is-top" : ""}" style="--i:${i}">${face(k)}</span>`)
       .join("");
     const btn = document.createElement("button");
     btn.type = "button";
@@ -542,24 +536,49 @@ function renderSlowestStacks() {
         <span class="deck-label">${label}</span>
         <span class="deck-blurb">${blurb}</span>
       </span>
-      <span class="deck-cards${letters.length > 6 ? " is-crowded" : ""}" style="--n:${letters.length};--step:${step}px" aria-hidden="true">${cards}</span>
+      <span class="deck-cards${keys.length > 6 ? " is-crowded" : ""}" style="--n:${keys.length};--step:${step}px" aria-hidden="true">${cards}</span>
+      ${names ? `<span class="deck-names">${keys.join(" \u00B7 ")}</span>` : ""}
       <span class="deck-foot">
         <span class="deck-meta">${meta}</span>
         <span class="deck-go" aria-hidden="true">Practice \u2192</span>
       </span>`;
-    btn.setAttribute("aria-label", `${label}: practice ${letters.join(", ")}. ${meta}.`);
-    btn.addEventListener("click", () => startReviewStack(letters));
+    btn.setAttribute("aria-label", `${label}: practice ${keys.join(", ")}. ${meta}.`);
+    btn.addEventListener("click", () => start(keys));
     const li = document.createElement("li");
     li.append(btn);
     list.append(li);
   });
+  list.closest(".tier-group").hidden = !tiers.length;
+  return tiers.length;
 }
 
-// A stack plays like a word set where every "word" is a single letter.
+function renderSlowestStacks() {
+  const letters = (progress.lettersCompleted || []).filter(knows);
+  const signs = SIGN_WORDS.filter((s) => (progress.signsCompleted || []).includes(s.word));
+  const emoji = Object.fromEntries(signs.map((s) => [s.word, s.emoji]));
+  const shown =
+    renderTiers($("letterTiers"), rankTiers(letters, progress.stats), progress.stats, {
+      face: (l) => `<b>${l}</b>`,
+      start: startReviewStack,
+      unit: "letter",
+    }) +
+    renderTiers($("signTiers"), rankTiers(signs.map((s) => s.word), progress.signStats), progress.signStats, {
+      face: (w) => `<span class="deck-emoji">${emoji[w]}</span>`,
+      start: (words) => (location.href = signPageUrl(words)),
+      unit: "sign",
+      names: true,
+    });
+  $("reviewStacks").hidden = !shown;
+}
+
+// A pile of letters plays like a word set where every "word" is a single letter.
 function startReviewStack(letters) {
   returnTab = "review";
-  startWordSet({ id: "review", name: "Slowest letters", words: letters, review: true });
+  startWordSet({ id: "review", name: "Practice letters", words: letters, review: true });
 }
+
+// Sign words play on signs.html; from Review, it plays just these and comes back here.
+const signPageUrl = (words) => `signs.html?words=${encodeURIComponent(words.join(","))}&from=review`;
 
 // ---------- shop tab ----------
 function renderShop() {
