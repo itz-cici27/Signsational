@@ -68,6 +68,14 @@
     <section id="tab-words" class="tab-panel" hidden>
       <h2 class="section-title">Spell It Out</h2>
       <p class="sub-lede">Fingerspell words letter by letter to earn coins!</p>
+      <form class="custom-word" id="customWordForm" autocomplete="off">
+        <label class="field" for="customWordInput">Spell your own word</label>
+        <div class="custom-word-row">
+          <input id="customWordInput" type="text" maxlength="12" placeholder="Type a word, like your name" spellcheck="false" autocapitalize="characters">
+          <button class="btn" type="submit">Spell it</button>
+        </div>
+        <p class="small-note" id="customWordNote" role="status"></p>
+      </form>
       <ol class="levels" id="wordLevels"></ol>
 
       <h2 class="section-title" id="signWordsTitle">Sign Words</h2>

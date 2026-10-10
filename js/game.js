@@ -335,6 +335,31 @@ function renderWords() {
   });
 }
 
+// Spell your own word: practice-only, so no coins (otherwise typing "A" would farm them).
+function startCustomWord(e) {
+  e.preventDefault();
+  const note = $("customWordNote");
+  const word = $("customWordInput").value.toUpperCase().replace(/[^A-Z]/g, "");
+  note.classList.add("custom-word-note-error");
+  if (!word) {
+    note.textContent = "Type a word using the letters A to Z.";
+    return;
+  }
+  if (!classifier) {
+    note.textContent = "The letter model hasn't loaded yet. Try again in a moment.";
+    return;
+  }
+  const missing = [...new Set(word.split("").filter((l) => !knows(l)))];
+  if (missing.length) {
+    note.textContent = `Mochi can't check ${missing.join(", ")} yet. Try a word without ${missing.length > 1 ? "those letters" : "that letter"}.`;
+    return;
+  }
+  note.classList.remove("custom-word-note-error");
+  note.textContent = "";
+  returnTab = "words";
+  startWordSet({ id: "custom", name: `Spell ${word}`, words: [word], reward: 0, custom: true });
+}
+
 // ---------- review tab ----------
 function renderReview() {
   const completed = progress.lettersCompleted || [];
@@ -617,6 +642,16 @@ function finishWordSet() {
   play.busy = true;
   closeCamera();
   const ws = play.wordSet;
+  if (ws.custom) {
+    $("bigSticker").innerHTML = "";
+    $("celebrateTitle").textContent = `You spelled ${ws.words[0]}!`;
+    $("celebrateText").textContent = "Great fingerspelling. Try another word!";
+    $("coinReward").hidden = true;
+    $("nextLevelBtn").hidden = true;
+    confetti();
+    $("celebrate").showModal();
+    return;
+  }
   const firstTime = !(progress.wordsCompleted || []).includes(ws.id);
   const coins = firstTime ? ws.reward : Math.round(ws.reward / 3);
 
@@ -835,6 +870,7 @@ function updateSettings() {
 $("continueBtn").addEventListener("click", dailyPractice);
 $("backBtn").addEventListener("click", goHome);
 $("skipBtn").addEventListener("click", skipLetter);
+$("customWordForm").addEventListener("submit", startCustomWord);
 $("settingsBtn").addEventListener("click", openSettings);
 $("authBtn").addEventListener("click", async () => {
   if (currentUser()) {
