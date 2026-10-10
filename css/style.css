@@ -536,6 +536,47 @@ legend { font-weight: 700; padding: 0 0.4rem; }
 }
 .level.is-done .level-coins { color: var(--ink); }
 
+/* ---------- word card grid ---------- */
+.word-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.8rem;
+}
+.word-card {
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  padding: 0.7rem 0.5rem;
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.word-card:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.word-card:disabled { opacity: 0.45; cursor: not-allowed; }
+.word-card.is-done { background: var(--mint); }
+.word-card.is-locked { background: transparent; border-style: dashed; box-shadow: none; color: var(--muted); }
+.word-card-word {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+}
+.word-card-status {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.word-card.is-done .word-card-status { color: var(--ink); }
+.word-card-coins {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
 /* ---------- word display ---------- */
 .word-display {
   display: flex;
