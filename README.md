@@ -92,10 +92,10 @@ Pair up whenever someone is blocked.
 
 | Person | Owns | Done when |
 |---|---|---|
-| **P1: ML lead** | Data collection, `train.py`, accuracy numbers, confusion matrix | `model.json` covers all 24 letters with a held-out accuracy number you can quote |
-| **P2: Game engineer** | `game.js`, `hands.js`, tuning strictness, testing on every laptop | A stranger can finish Level 1 without help |
-| **P3: Designer** | Mochi, stickers, reference photos, accessibility polish, `style.css` | Every screen looks finished and passes the accessibility checklist below |
-| **P4: PM, pitch, and deploy** | GitHub repo, deployment, submission, pitch deck and script, backup demo video | Site is live, submitted early, and the pitch is rehearsed |
+| **ML engineers: Cici Zhu & Rhea Lulla** | Data collection, `train.py`, accuracy numbers, confusion matrix | `model.json` covers all 24 letters with a held-out accuracy number you can quote |
+| **Game engineer: Emily Bae** | `game.js`, `hands.js`, tuning strictness, testing on every laptop | A stranger can finish Level 1 without help |
+| **UI/UX Designer: Saanvi Prasad** | Mochi, stickers, reference photos, accessibility polish, `style.css` | Every screen looks finished and passes the accessibility checklist below |
+| **Together: pitch and deploy** | GitHub repo, deployment, submission, pitch deck and script, backup demo video | Site is live, submitted early, and the pitch is rehearsed |
 
 ## Timeline
 
