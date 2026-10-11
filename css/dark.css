@@ -4,12 +4,13 @@
 
 html.dark {
   color-scheme: dark;
-  --paper: #17122B;
-  --dot: #2A2247;
-  --ink: #F1ECFF;      /* text and outlines turn light */
-  --muted: #C9BFE6;
-  --white: #251D40;    /* cards and buttons turn deep purple */
-  --line: #3E3466;
+  --paper: #2D2456;    /* small inset areas (speech bubble, price tags) */
+  --dot: #3A2F66;
+  --ink: #F7F3FF;      /* text and outlines turn light */
+  --muted: #DDD5F5;
+  --white: #3A2F66;    /* cards and buttons: lighter purple so they stand out */
+  --line: #8577BE;     /* dashed and thin borders */
+  --panel: #1E1736;    /* the big page card behind them: darker */
   --danger: #FF8AB4;
 }
 
@@ -52,15 +53,26 @@ html.dark .cam-status, html.dark .hand-state:not(.ok) { background: rgba(37, 29,
 html.dark .brand-tag { color: #FF9CCB; }
 
 /* Drawings (Mochi, stickers, logo) keep their dark plum outlines and faces. */
-html.dark svg { --ink: #2B1B4A; }
+html.dark svg { --ink: #2B1B4A; --white: #FFFFFF; }
 
 /* Night garden behind the page */
 html.dark body.garden-bg::before {
   background: #241B4A url("../assets/garden-night.svg") center bottom / cover no-repeat;
 }
 html.dark .garden-bg .topbar,
-html.dark .garden-bg main { box-shadow: 0 8px 0 rgba(5, 2, 15, 0.45); }
-html.dark .garden-bg .foot { background: var(--white); }
+html.dark .garden-bg main { background: var(--panel); box-shadow: 0 8px 0 rgba(5, 2, 15, 0.55); }
+html.dark .garden-bg .foot,
+html.dark dialog { background: var(--panel); }
+
+/* Locked and not-yet-available cards: a soft tile instead of see-through,
+   and less fading so the words stay readable. */
+html.dark .letter-card.is-locked,
+html.dark .level.is-locked,
+html.dark .word-card.is-locked { background: #2A2150; }
+html.dark .btn:disabled,
+html.dark .letter-card:disabled,
+html.dark .word-card:disabled,
+html.dark .shop-item:disabled { opacity: 0.75; }
 
 /* Moon / sun button */
 .theme-btn { display: inline-flex; align-items: center; justify-content: center; padding-left: 0.7rem; padding-right: 0.7rem; }
@@ -68,3 +80,18 @@ html.dark .garden-bg .foot { background: var(--white); }
 .theme-btn .icon-sun { display: none; }
 html.dark .theme-btn .icon-sun { display: block; }
 html.dark .theme-btn .icon-moon { display: none; }
+
+/* Shop prices on dark tags (not affordable yet, or already owned): white numbers */
+html.dark .shop-item.is-expensive .shop-action,
+html.dark .shop-item.is-owned .shop-action { color: #FFFFFF; --ink: #F7F3FF; }
+html.dark .shop-action { box-shadow: inset 0 0 0 2px #FFFFFF; }
+
+/* Review: Worst / Medium / Best piles become dark tinted cards with bright labels */
+html.dark .deck-worst { --tint: #4A2346; --accent: #FF8AB4; }
+html.dark .deck-medium { --tint: #4A3B22; --accent: #FFD23F; }
+html.dark .deck-best { --tint: #1F4A3D; --accent: #7EE6BA; }
+html.dark .deck-label { color: #2B1B4A; }
+html.dark .deck-blurb,
+html.dark .deck-meta { color: #E6DEFA; }
+/* "Needs practice" on the yellow letter cards */
+html.dark .letter-card.needs-practice .letter-card-status { color: #B3124E; }
