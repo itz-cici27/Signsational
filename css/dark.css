@@ -95,3 +95,15 @@ html.dark .deck-blurb,
 html.dark .deck-meta { color: #E6DEFA; }
 /* "Needs practice" on the yellow letter cards */
 html.dark .letter-card.needs-practice .letter-card-status { color: #B3124E; }
+
+/* Shop rarity cards (Common to Legendary): the light pastel tints are set by
+   js/game.js, so they are overridden here with dark tints of each rarity color. */
+html.dark .shop-item {
+  background-image: none !important;
+  background-color: color-mix(in srgb, var(--rarity-color, #7a8b99) 30%, #2A2150) !important;
+}
+html.dark .shop-item:has(.shop-rarity-dot[aria-label="Legendary"]) {
+  background-image: linear-gradient(135deg, #5A2A4E 0%, #5A4A28 50%, #33306A 100%) !important;
+}
+html.dark .shop-desc { color: #E6DEFA; }
+html.dark .shop-rarity-dot { border-color: #FFFFFF; }
