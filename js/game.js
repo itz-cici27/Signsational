@@ -1196,7 +1196,6 @@ function openSettings() {
   document.querySelectorAll('input[name="hand"]').forEach((r) => (r.checked = r.value === (settings.leftHanded ? "left" : "right")));
   $("setBig").checked = settings.bigText;
   $("setSound").checked = settings.sound;
-  $("setUnlock").checked = settings.unlockAll;
   document.querySelectorAll('input[name="strict"]').forEach((r) => (r.checked = r.value === settings.strictness));
   $("settings").showModal();
 }
@@ -1207,7 +1206,6 @@ function updateSettings() {
     leftHanded: document.querySelector('input[name="hand"]:checked')?.value === "left",
     bigText: $("setBig").checked,
     sound: $("setSound").checked,
-    unlockAll: $("setUnlock").checked,
     strictness: document.querySelector('input[name="strict"]:checked')?.value || "normal",
   };
   saveSettings(settings);
