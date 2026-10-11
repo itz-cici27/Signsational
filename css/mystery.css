@@ -1,0 +1,99 @@
+/* Mystery boxes in Mochi's Shop (js/mystery-box.js). Works in light and dark mode. */
+
+.mb-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.mb-head .shop-rarity { margin: 0; }
+.mb-new {
+  font-family: var(--display); font-weight: 700; font-size: 0.8rem; letter-spacing: 0.04em;
+  background: var(--pink); color: #FFFFFF; padding: 0.05rem 0.6rem;
+  border: 2px solid #2B1B4A; border-radius: 999px;
+}
+.mb-note { margin: 0.35rem 0 0.9rem; color: var(--muted); font-size: 0.95rem; }
+.mb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1.1rem; }
+
+.mb-card {
+  position: relative;
+  display: grid; justify-items: center; gap: 0.35rem;
+  font: inherit; color: var(--ink); text-align: center;
+  background: var(--white);
+  border: 3px solid var(--ink); border-radius: 24px;
+  padding: 1rem 1rem 1.1rem;
+  box-shadow: 0 5px 0 var(--ink);
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.mb-card:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 7px 0 var(--ink); }
+.mb-card:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
+.mb-card:disabled { cursor: not-allowed; }
+.mb-card.is-special { background-image: linear-gradient(160deg, #F6EEFF 0%, #FFF0F7 55%, #FFF6E0 100%); }
+html.dark .mb-card.is-special { background-image: linear-gradient(160deg, #3E2F6E 0%, #5A2A4E 60%, #5A4A28 100%); }
+
+.mb-art { width: 118px; height: 108px; display: block; overflow: visible; }
+.mb-card:hover:not(:disabled) .mb-art { animation: mb-wiggle 600ms ease; }
+@keyframes mb-wiggle { 25% { transform: rotate(-6deg); } 50% { transform: rotate(5deg); } 75% { transform: rotate(-3deg); } }
+
+.mb-name { font-family: var(--display); font-weight: 700; font-size: 1.2rem; }
+.mb-blurb { font-size: 0.88rem; color: var(--muted); margin-top: -0.2rem; }
+html.dark .mb-blurb { color: #E6DEFA; }
+.mb-odds {
+  width: 100%; height: 12px; display: flex; overflow: hidden; margin-top: 0.3rem;
+  border: 2px solid var(--ink); border-radius: 999px;
+}
+.mb-odds span { display: block; height: 100%; }
+.mb-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.25rem 0.7rem; font-size: 0.8rem; font-weight: 700; }
+.mb-legend i {
+  display: inline-block; width: 9px; height: 9px; margin-right: 0.25rem; vertical-align: -1px;
+  border: 1.5px solid var(--ink); border-radius: 50%;
+}
+.mb-buy {
+  display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.45rem;
+  font-family: var(--display); font-weight: 700; font-size: 1rem; color: #2B1B4A;
+  background: var(--sun); border: 3px solid #2B1B4A; border-radius: 999px;
+  padding: 0.3rem 1.1rem; box-shadow: 0 3px 0 #2B1B4A;
+}
+.mb-buy.is-off { background: var(--paper); color: var(--muted); border: 3px dashed var(--ink); box-shadow: none; }
+html.dark .mb-buy.is-off { color: #FFFFFF; border-color: #FFFFFF; }
+.mb-sparkle { position: absolute; font-size: 1.1rem; }
+.mb-sparkle-a { left: 18px; top: 14px; }
+.mb-sparkle-b { right: 20px; top: 40px; }
+
+/* ---------- opening dialog ---------- */
+.mb-dialog { text-align: center; overflow: hidden; }
+.mb-dialog::backdrop { background: rgba(30, 18, 60, 0.55); }
+.mb-step { position: relative; }
+.mb-opening { font-size: 1.15rem; margin: 0 0 0.25rem; }
+.mb-tap { display: block; margin: 0.25rem auto; padding: 0.5rem; background: none; border: 0; border-radius: 24px; cursor: pointer; }
+.mb-tap .mb-art { width: 160px; height: 146px; animation: mb-shake 900ms ease-in-out infinite; }
+.mb-tap .mb-lid { transform-box: fill-box; transform-origin: 20% 100%; transition: transform 350ms ease; }
+.mb-tap.is-opening .mb-art { animation: none; }
+.mb-tap.is-opening .mb-lid { transform: translate(-8px, -26px) rotate(-22deg); }
+@keyframes mb-shake {
+  0%, 60%, 100% { transform: rotate(0); }
+  70% { transform: rotate(-7deg); } 80% { transform: rotate(6deg); } 90% { transform: rotate(-4deg); }
+}
+.mb-tap-hint { margin: 0; color: var(--muted); }
+
+.mb-step-reveal { padding-top: 0.5rem; }
+.mb-rays {
+  position: absolute; left: 50%; top: 60px; z-index: 0;
+  width: 440px; height: 440px; margin: -220px 0 0 -220px; border-radius: 50%;
+  background: repeating-conic-gradient(rgba(255, 210, 63, 0.3) 0 10deg, transparent 10deg 22deg);
+  animation: mb-spin 14s linear infinite;
+}
+@keyframes mb-spin { to { transform: rotate(360deg); } }
+.mb-confetti-wrap { position: absolute; inset: -1.75rem; z-index: 0; pointer-events: none; }
+.mb-confetti {
+  position: absolute; width: 10px; height: 14px; border-radius: 3px;
+  transform: rotate(var(--r)); animation: mb-pop 700ms ease-out both;
+}
+@keyframes mb-pop { from { opacity: 0; transform: translateY(30px) rotate(0); } to { opacity: 1; transform: translateY(0) rotate(var(--r)); } }
+.mb-step-reveal > :not(.mb-rays):not(.mb-confetti-wrap) { position: relative; z-index: 1; }
+.mb-prize { font-size: 5rem; line-height: 1.1; margin: 1.5rem 0 0.75rem; animation: mb-grow 450ms cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes mb-grow { from { transform: scale(0.2); } to { transform: scale(1); } }
+.mb-tier {
+  display: inline-block; font-family: var(--display); font-weight: 700; font-size: 0.9rem;
+  color: #FFFFFF; padding: 0.1rem 0.8rem; border: 2px solid #2B1B4A; border-radius: 999px;
+}
+.mb-step-reveal h2 { margin: 0.4rem 0 0.2rem; }
+.mb-prize-desc { margin: 0; color: var(--muted); }
+.mb-actions { justify-content: center; margin-top: 1rem; }
+html.dark .mb-rays { background: repeating-conic-gradient(rgba(255, 210, 63, 0.16) 0 10deg, transparent 10deg 22deg); }

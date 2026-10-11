@@ -10,6 +10,7 @@ import {
 import { mascotSVG, applyFlavor } from "./mascot.js";
 import { signIn, signOutUser, onAuthChange, currentUser, saveToCloud, loadFromCloud, getLeaderboard, ensureLeaderboardEntry } from "./firebase.js";
 import { STICKERS, stickerStats, hasSticker, newStickers, lockedCaption, stickerSVG } from "./stickers.js";
+import { mysteryBoxSection, pickPrize, showMysteryBox } from "./mystery-box.js";
 
 const COIN = `<img class="coin-icon" src="assets/coin.png" alt="coins" aria-hidden="true">`;
 const ALL_LETTERS = [...LETTERS, ...MOTION_LETTERS].sort();
@@ -578,6 +579,7 @@ function renderShop() {
   $("shopCoins").textContent = progress.coins || 0;
   const grid = $("shopGrid");
   grid.innerHTML = "";
+  grid.append(mysteryBoxSection({ coins: progress.coins || 0, owned: shop.owned, onOpen: openMysteryBox }));
 
   SHOP_RARITIES.forEach((rarity) => {
     const items = SHOP_ITEMS.filter((i) => i.rarity === rarity.id);
@@ -649,6 +651,28 @@ function handleShopClick(itemId) {
     renderShop();
     $("coinDisplay").textContent = progress.coins;
   }
+}
+
+// Mystery box: pay, get a random accessory you don't own yet, then show the reveal.
+// The prize is saved right away (not equipped), so closing the dialog early is safe.
+function openMysteryBox(box) {
+  if ((progress.coins || 0) < box.price) return;
+  const item = pickPrize(box, shop.owned);
+  if (!item) return;
+  progress.coins -= box.price;
+  persistProgress();
+  shop.owned.push(item.id);
+  persistShop();
+  renderShop();
+  $("coinDisplay").textContent = progress.coins;
+  showMysteryBox(box, item, {
+    onEquip: (id) => {
+      if (!shop.equipped.includes(id)) shop.equipped.push(id);
+      persistShop();
+      renderMascots();
+      renderShop();
+    },
+  });
 }
 
 // ---------- leaderboard tab ----------
