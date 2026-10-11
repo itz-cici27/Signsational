@@ -1,0 +1,70 @@
+/* Dark mode: the moonlit garden.
+   Turned on by the moon button in the top bar (js/theme.js), which adds
+   class="dark" to <html>. Loaded after style.css; style.css itself is unchanged. */
+
+html.dark {
+  color-scheme: dark;
+  --paper: #17122B;
+  --dot: #2A2247;
+  --ink: #F1ECFF;      /* text and outlines turn light */
+  --muted: #C9BFE6;
+  --white: #251D40;    /* cards and buttons turn deep purple */
+  --line: #3E3466;
+  --danger: #FF8AB4;
+}
+
+/* Bright things (yellow, mint and pink buttons, done cards, stickers) keep dark text,
+   so they stay easy to read. */
+  html.dark .btn,
+  html.dark .letter-card.is-done,
+  html.dark .level.is-done,
+  html.dark .sticker.earned .disc,
+  html.dark .sticker.earned:nth-child(even) .disc,
+  html.dark .sticker.earned:nth-child(3n) .disc,
+  html.dark .hand-state.ok,
+  html.dark .big-sticker,
+  html.dark #progressFill,
+  html.dark .letter-counts li.full,
+  html.dark .coins,
+  html.dark .word-card.is-done,
+  html.dark .word-letter.is-current,
+  html.dark .word-letter.is-done,
+  html.dark .shop-balance,
+  html.dark .shop-action,
+  html.dark .shop-item.is-equipped .shop-action,
+  html.dark .coin-reward,
+  html.dark .lb-row.is-me,
+  html.dark .vol-steps li::before,
+  html.dark .volunteer-card:hover,
+  html.dark .letter-card.is-done.needs-practice {
+  --ink: #2B1B4A;
+  --muted: #5E4F7C;
+  color: #2B1B4A;
+}
+
+/* Quiet (white) buttons are dark in dark mode, so they keep light text. */
+html.dark .btn-quiet { --ink: #F1ECFF; color: #F1ECFF; box-shadow: 0 3px 0 #0C0818; }
+
+/* Camera message bar */
+html.dark .cam-status, html.dark .hand-state:not(.ok) { background: rgba(37, 29, 64, 0.94); }
+
+/* Logo tagline: lighter pink so it shows on purple */
+html.dark .brand-tag { color: #FF9CCB; }
+
+/* Drawings (Mochi, stickers, logo) keep their dark plum outlines and faces. */
+html.dark svg { --ink: #2B1B4A; }
+
+/* Night garden behind the page */
+html.dark body.garden-bg::before {
+  background: #241B4A url("../assets/garden-night.svg") center bottom / cover no-repeat;
+}
+html.dark .garden-bg .topbar,
+html.dark .garden-bg main { box-shadow: 0 8px 0 rgba(5, 2, 15, 0.45); }
+html.dark .garden-bg .foot { background: var(--white); }
+
+/* Moon / sun button */
+.theme-btn { display: inline-flex; align-items: center; justify-content: center; padding-left: 0.7rem; padding-right: 0.7rem; }
+.theme-btn svg { width: 1.4rem; height: 1.4rem; display: block; }
+.theme-btn .icon-sun { display: none; }
+html.dark .theme-btn .icon-sun { display: block; }
+html.dark .theme-btn .icon-moon { display: none; }
