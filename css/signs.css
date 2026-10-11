@@ -12,3 +12,109 @@
 
 .word-counts { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
 .word-counts b { font-size: 0.9rem; }
+
+/* ---------- Sign Words folders (home page) ----------
+   Each topic is a folder: a colored tab, its name, a "learned" bar, and a peek at the
+   words inside. An open folder spans the whole row and shows its word cards. */
+.sign-folders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-auto-flow: dense; /* later folders fill the gap beside an open one */
+  gap: 1.8rem 1rem;
+  padding-top: 15px; /* room for the first row's tabs */
+  margin-bottom: 1rem;
+}
+.sign-folder {
+  --folder: var(--mint);
+  --folder-tint: #E2F8EE;
+  position: relative;
+  background: var(--folder-tint);
+  border: 3px solid var(--ink);
+  border-radius: 4px 18px 18px 18px;
+  box-shadow: 0 4px 0 var(--ink);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.sign-folder[open] { grid-column: 1 / -1; order: -1; } /* opened folder goes first */
+.sign-folder:not([open]):hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--ink); }
+.folder-greetings { --folder: #FF8DC0; --folder-tint: #FFE6F1; }
+.folder-basics    { --folder: #7FDDB7; --folder-tint: #E2F8EE; }
+.folder-questions { --folder: #C3A6F3; --folder-tint: #F0E8FF; }
+.folder-needs     { --folder: #FFD23F; --folder-tint: #FFF5CF; }
+.folder-people    { --folder: #FFAE85; --folder-tint: #FFEBDF; }
+.folder-feelings  { --folder: #86CCFA; --folder-tint: #E2F3FF; }
+.folder-time      { --folder: #9AA8FF; --folder-tint: #E8EBFF; }
+.folder-school    { --folder: #F2A65A; --folder-tint: #FDEEDD; }
+.folder-animals   { --folder: #B5D96B; --folder-tint: #F1F8DF; }
+.folder-colors    { --folder: #F58FA8; --folder-tint: #FDE7EC; }
+.folder-actions   { --folder: #5FD1D1; --folder-tint: #DFF6F6; }
+.folder-home      { --folder: #D9B48F; --folder-tint: #F7EEE5; }
+
+.sign-folder summary {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.75rem 0.85rem 0.8rem;
+  cursor: pointer;
+  list-style: none;
+}
+.sign-folder summary::-webkit-details-marker { display: none; }
+.sign-folder summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; border-radius: 4px 18px 18px 18px; }
+
+/* the tab sticking up from the top-left corner */
+.folder-tab {
+  position: absolute;
+  left: -3px;
+  top: -16px;
+  width: 105px;
+  height: 16px;
+  background: var(--folder);
+  border: 3px solid var(--ink);
+  border-bottom: none;
+  border-radius: 12px 14px 0 0;
+}
+.folder-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+.folder-name { font-family: var(--display); font-weight: 700; font-size: 1.08rem; }
+.folder-count { font-size: 0.8rem; font-weight: 700; color: var(--muted); }
+.folder-bar {
+  display: block;
+  height: 8px;
+  background: var(--white);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.folder-bar span { display: block; height: 100%; background: var(--folder); border-right: 2px solid var(--ink); }
+.folder-bar span[style="width:0%"] { border-right: none; }
+.folder-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.folder-chip {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.45rem;
+  background: var(--white);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+}
+.folder-chip.is-more { background: var(--folder); }
+.sign-folder[open] .folder-chips { display: none; } /* the cards show the words now */
+.sign-folder[open] summary { border-bottom: 3px dashed var(--ink); }
+.folder-cards { padding: 1.25rem 1.1rem 1.4rem; }
+
+html.dark .folder-greetings { --folder-tint: #4A2747; }
+html.dark .folder-basics    { --folder-tint: #1F4440; }
+html.dark .folder-questions { --folder-tint: #3B2D63; }
+html.dark .folder-needs     { --folder-tint: #4A3E1C; }
+html.dark .folder-people    { --folder-tint: #4A2F27; }
+html.dark .folder-feelings  { --folder-tint: #1F3A55; }
+html.dark .folder-time      { --folder-tint: #2B3160; }
+html.dark .folder-school    { --folder-tint: #4A3420; }
+html.dark .folder-animals   { --folder-tint: #33441F; }
+html.dark .folder-colors    { --folder-tint: #4A2633; }
+html.dark .folder-actions   { --folder-tint: #1D4246; }
+html.dark .folder-home      { --folder-tint: #42352A; }
+html.dark .folder-chip.is-more { color: #2B1B4A; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sign-folder { transition: none; }
+  .sign-folder:not([open]):hover { transform: none; }
+}
