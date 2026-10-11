@@ -13,6 +13,9 @@ Two extra tricks, because word data is scarce:
   a letter handshape held still is not a word sign. This stops the game from
   hearing HELLO every time you hold your hand up.
 - Every clip is also added mirrored, so the model works for either hand.
+
+Clips have two hand slots per frame (see js/signs.js). Older one-hand CSVs (w0..w659)
+still load: their hand goes in one slot and the other is marked missing.
 """
 from __future__ import annotations
 
@@ -31,8 +34,15 @@ ROOT = Path(__file__).resolve().parent
 WORDS_DIR = ROOT / "data" / "words"
 LETTERS_DIR = ROOT / "data"
 MODEL_DIR = ROOT / "model"
-FRAMES, PER_FRAME = 15, 44  # must match js/signs.js
+# Must match js/signs.js
+FRAMES = 15
+SLOTS = 2              # two hands, ordered by MediaPipe's Left/Right label
+PER_HAND = 45          # 42 handshape + 2 wrist position + 1 "hand is here"
+PER_FRAME = PER_HAND * SLOTS
+ONE_HAND_SLOT = 1      # where one-hand clips (old recordings, letters) go; see js/signs.js
+OLD_PER_FRAME = 44     # one-hand clips recorded before two-hand support
 FEATURES = [f"w{i}" for i in range(FRAMES * PER_FRAME)]
+OLD_FEATURES = [f"w{i}" for i in range(FRAMES * OLD_PER_FRAME)]
 MIN_PER_WORD = 10
 NONE_PER_SIGNER = 40
 rng = np.random.default_rng(0)
@@ -46,16 +56,37 @@ def load_words() -> pd.DataFrame:
     frames = []
     for f in files:
         df = pd.read_csv(f)
-        if {"person", "label", *FEATURES} - set(df.columns):
+        if not {"person", "label", *FEATURES} - set(df.columns):
+            frames.append(df[["person", "label", *FEATURES]])
+        elif not {"person", "label", *OLD_FEATURES} - set(df.columns):
+            print(f"{f.name}: one-hand clips, second hand marked missing.")
+            frames.append(upgrade(df))
+        else:
             print(f"Skipping {f.name}: it isn't a word-clip CSV.")
-            continue
-        frames.append(df[["person", "label", *FEATURES]])
     if not frames:
         sys.exit("None of the CSVs in data/words/ came from the word recorder.")
     df = pd.concat(frames, ignore_index=True).dropna().drop_duplicates()
     df["person"] = df["person"].astype(str).str.strip()
     df["label"] = df["label"].astype(str).str.strip().str.upper()
     return df
+
+
+def one_hand_clips(hand: np.ndarray) -> np.ndarray:
+    """(n, FRAMES, 44) one-hand frames -> (n, FRAMES * PER_FRAME) two-hand clips."""
+    n = len(hand)
+    out = np.zeros((n, FRAMES, SLOTS, PER_HAND), np.float32)
+    out[:, :, ONE_HAND_SLOT, :OLD_PER_FRAME] = hand
+    out[:, :, ONE_HAND_SLOT, OLD_PER_FRAME] = 1  # "hand is here"
+    return out.reshape(n, -1)
+
+
+def upgrade(df: pd.DataFrame) -> pd.DataFrame:
+    """Old one-hand CSV rows -> the two-hand format, other hand marked missing."""
+    hand = df[OLD_FEATURES].to_numpy(np.float32).reshape(-1, FRAMES, OLD_PER_FRAME)
+    out = pd.DataFrame(np.round(one_hand_clips(hand), 4), columns=FEATURES)
+    out.insert(0, "label", df["label"].to_numpy())
+    out.insert(0, "person", df["person"].to_numpy())
+    return out
 
 
 def still_letter_clips() -> pd.DataFrame:
@@ -73,14 +104,17 @@ def still_letter_clips() -> pd.DataFrame:
                 clip = np.tile(np.append(xy, [0, 0]), (FRAMES, 1))
                 clip[:, :42] += rng.normal(0, 0.03, (FRAMES, 42))
                 clip[1:, 42:] += rng.normal(0, 0.03, (FRAMES - 1, 2))
-                rows.append([str(person), "NONE", *np.round(clip.reshape(-1), 4)])
+                rows.append([str(person), "NONE", *np.round(one_hand_clips(clip[None])[0], 4)])
     return pd.DataFrame(rows, columns=["person", "label", *FEATURES])
 
 
 def mirrored(df: pd.DataFrame) -> pd.DataFrame:
+    """Flip left and right: negate every x, and swap the two hand slots."""
+    clips = df[FEATURES].to_numpy(np.float32).reshape(-1, FRAMES, SLOTS, PER_HAND).copy()
+    clips[..., [*range(0, 42, 2), 42]] *= -1
+    clips = clips[:, :, ::-1, :]
     out = df.copy()
-    x_cols = [f"w{f * PER_FRAME + i}" for f in range(FRAMES) for i in [*range(0, 42, 2), 42]]
-    out[x_cols] = -out[x_cols]
+    out[FEATURES] = clips.reshape(len(df), -1)
     return out
 
 

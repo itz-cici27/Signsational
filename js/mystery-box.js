@@ -4,6 +4,7 @@
 // js/game.js calls mysteryBoxSection() from renderShop() and openMysteryBox() on click.
 
 import { SHOP_ITEMS, SHOP_RARITIES } from "./letters.js";
+import { playBoxCharge, playBoxReveal } from "./sfx.js";
 
 // Chances are in percent and add up to 100. Change names, prices and odds here.
 export const MYSTERY_BOXES = [
@@ -112,7 +113,9 @@ export function mysteryBoxSection({ coins, owned, onOpen }) {
 
 // The opening dialog: the box wiggles, the player taps it, and the prize appears.
 // The prize is already saved before this is shown, so closing early loses nothing.
-export function showMysteryBox(box, item, { onEquip }) {
+// `sound` is the player's Sound setting: a power-up charge on tap, then a fanfare
+// that gets bigger with the prize's rarity (js/sfx.js).
+export function showMysteryBox(box, item, { onEquip, sound = true }) {
   document.getElementById("mysteryDialog")?.remove();
   const rarity = rarityOf(item.rarity);
   const dlg = document.createElement("dialog");
@@ -148,11 +151,13 @@ export function showMysteryBox(box, item, { onEquip }) {
     dlg.querySelector("#mbEquip").addEventListener("click", () => { onEquip(item.id); dlg.close(); });
     dlg.querySelector("#mbBack").addEventListener("click", () => dlg.close());
     dlg.querySelector("#mbEquip").focus();
+    playBoxReveal(item.rarity, sound);
   };
 
   const tap = dlg.querySelector("#mbTap");
   tap.addEventListener("click", () => {
     tap.classList.add("is-opening");
+    playBoxCharge(sound);
     setTimeout(reveal, 450);
   }, { once: true });
   dlg.showModal();

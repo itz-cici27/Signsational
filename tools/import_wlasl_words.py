@@ -16,8 +16,11 @@ whole 5 GB download (needs a Kaggle API token: KAGGLE_API_TOKEN,
 original link from the JSON (YouTube links are skipped); only some still work.
 
 Writes data/words/wlasl.csv. Each video is run through the same MediaPipe hand
-model the game uses, the signing hand is picked, and the sign is cut into
-overlapping 0.8-second clips exactly like words-recorder.html does (see js/signs.js).
+model the game uses, both hands are kept (one slot each, by MediaPipe's Left/Right
+label), and the sign is cut into overlapping 0.8-second clips exactly like
+words-recorder.html does (see js/signs.js).
+
+    --only HELP,WATER     import just these words (default: every word in SIGNS)
 """
 from __future__ import annotations
 
@@ -65,6 +68,8 @@ CHAIR, TABLE, CLOTHES, CAR
 WORDS = {w.strip().lower(): w.strip() for w in SIGNS.split(",")}
 
 # Must match js/signs.js
+SLOTS = ["Left", "Right"]  # MediaPipe's labels, in clip order
+PER_HAND = 45              # 42 handshape + 2 wrist position + 1 "hand is here"
 SIGN_FRAMES = 15
 SIGN_WINDOW_MS = 800
 MAX_GAP_MS = 150
@@ -187,8 +192,8 @@ def trim(frames, inst):
     return [f for f in frames if lo <= f[0] <= hi]
 
 
-def signing_hand(frames):
-    """The hand seen most often, ties broken by how far its wrist travels."""
+def busiest_hand(frames):
+    """The hand seen most often, ties broken by how far its wrist travels (for stats only)."""
     best = None
     for label in {h for _, hands in frames for h in hands}:
         pts = [hands[label] for _, hands in frames if label in hands]
@@ -208,7 +213,7 @@ def frame_info(lm, aspect):
 
 
 def clip_at(timed, start, end):
-    """Port of clipAt() in js/signs.js."""
+    """Port of clipAt() + clipFeatures() in js/signs.js. timed: [(t, [slot info or None])]."""
     picked, j = [], 0
     for i in range(SIGN_FRAMES):
         t = start + (end - start) * i / (SIGN_FRAMES - 1)
@@ -217,11 +222,19 @@ def clip_at(timed, start, end):
         if not timed or abs(timed[j][0] - t) > MAX_GAP_MS:
             return None
         picked.append(timed[j][1])
-    size = np.mean([f["size"] for f in picked])
+    present = [h for slots in picked for h in slots if h]
+    size = np.mean([h["size"] for h in present])
+    first = [h for h in picked[0] if h]
+    ox = np.mean([h["wx"] for h in first])
+    oy = np.mean([h["wy"] for h in first])
     out = []
-    for f in picked:
-        out.extend(f["shape"])
-        out.extend([(f["wx"] - picked[0]["wx"]) / size, (f["wy"] - picked[0]["wy"]) / size])
+    for slots in picked:
+        for h in slots:
+            if h:
+                out.extend(h["shape"])
+                out.extend([(h["wx"] - ox) / size, (h["wy"] - oy) / size, 1])
+            else:
+                out.extend([0] * PER_HAND)
     return out
 
 
@@ -245,7 +258,15 @@ def main():
     src.add_argument("--kaggle", action="store_true", help="download only the needed videos from Kaggle")
     src.add_argument("--online", action="store_true", help="try the original (non-YouTube) video links")
     ap.add_argument("--json", type=Path, help="WLASL_v0.3.json (downloaded from GitHub if left out)")
+    ap.add_argument("--only", help="comma-separated words to import (default: all of SIGNS)")
     args = ap.parse_args()
+    if args.only:
+        keep = {w.strip().upper() for w in args.only.split(",")}
+        unknown = keep - set(WORDS.values())
+        if unknown:
+            sys.exit(f"Not in SIGNS: {', '.join(sorted(unknown))}")
+        for gloss in [g for g, w in WORDS.items() if w not in keep]:
+            del WORDS[gloss]
 
     import mediapipe as mp
 
@@ -267,7 +288,7 @@ def main():
         min_tracking_confidence=0.5,
     )
 
-    rows, used, missing, empty = [], {w: 0 for w in WORDS.values()}, 0, 0
+    rows, used, missing, empty, busiest = [], {w: 0 for w in WORDS.values()}, 0, 0, {}
     for n, (word, inst) in enumerate(todo, 1):
         video = videos / f"{inst['video_id']}.mp4"
         if not video.exists():
@@ -276,8 +297,9 @@ def main():
         print(f"[{n}/{len(todo)}] {word} {video.name}", end="", flush=True)
         frames, aspect = track(video, options)
         frames = trim(frames, inst)
-        hand = signing_hand(frames)
-        timed = [(t, frame_info(hands[hand], aspect)) for t, hands in frames if hand in hands]
+        busiest[busiest_hand(frames)] = busiest.get(busiest_hand(frames), 0) + 1
+        timed = [(t, [frame_info(hands[s], aspect) if s in hands else None for s in SLOTS])
+                 for t, hands in frames if hands]
         clips = slice_take(timed)
         print(f": {len(clips)} clips")
         if not clips:
@@ -292,13 +314,14 @@ def main():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with OUT.open("w", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["person", "label", *[f"w{i}" for i in range(SIGN_FRAMES * 44)]])
+        w.writerow(["person", "label", *[f"w{i}" for i in range(SIGN_FRAMES * PER_HAND * len(SLOTS))]])
         w.writerows(rows)
     counts = {wd: sum(r[1] == wd for r in rows) for wd in WORDS.values()}
     print(f"\nWrote {len(rows)} clips to {OUT}.")
     print("  Clips: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
     print("  Videos used: " + ", ".join(f"{k} {v}" for k, v in used.items()))
     print(f"  {missing} videos not found, {empty} with no usable hand.")
+    print("  Busiest hand per video (MediaPipe's label): " + ", ".join(f"{k} {v}" for k, v in busiest.items()))
 
 
 if __name__ == "__main__":

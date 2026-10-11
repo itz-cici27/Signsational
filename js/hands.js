@@ -15,12 +15,13 @@ const CONNECTIONS = [
   [13, 17], [17, 18], [18, 19], [19, 20], [0, 17],
 ];
 
-export async function createHandTracker() {
+// Letters track one hand; sign words track up to two (numHands: 2).
+export async function createHandTracker({ numHands = 1 } = {}) {
   const vision = await FilesetResolver.forVisionTasks(WASM_URL);
   const options = (delegate) => ({
     baseOptions: { modelAssetPath: MODEL_URL, delegate },
     runningMode: "VIDEO",
-    numHands: 1,
+    numHands,
     minHandDetectionConfidence: 0.5,
     minHandPresenceConfidence: 0.5,
     minTrackingConfidence: 0.5,
@@ -51,7 +52,9 @@ export function stopCamera(stream) {
   if (stream) stream.getTracks().forEach((t) => t.stop());
 }
 
-// Calls onFrame(landmarks or null) once per new video frame. Returns a stop function.
+// Calls onFrame(landmarks or null, hands) once per new video frame. `landmarks` is the
+// first hand found; `hands` is every hand found, as [{ lm, label }], where label is
+// MediaPipe's "Left" or "Right" (the sign words use both hands). Returns a stop function.
 export function runLoop(video, tracker, onFrame) {
   let running = true;
   let lastTime = -1;
@@ -60,7 +63,9 @@ export function runLoop(video, tracker, onFrame) {
     if (video.readyState >= 2 && video.currentTime !== lastTime) {
       lastTime = video.currentTime;
       const result = tracker.detectForVideo(video, performance.now());
-      onFrame(result.landmarks && result.landmarks.length ? result.landmarks[0] : null);
+      const sides = result.handedness || result.handednesses || [];
+      const hands = (result.landmarks || []).map((lm, i) => ({ lm, label: sides[i]?.[0]?.categoryName || "Right" }));
+      onFrame(hands.length ? hands[0].lm : null, hands);
     }
     requestAnimationFrame(tick);
   }
@@ -91,8 +96,8 @@ export function toFeatures(lm, aspect = 4 / 3, leftHanded = false) {
   return out;
 }
 
-export function drawHand(ctx, lm, width, height, color = "#FF6FAE") {
-  ctx.clearRect(0, 0, width, height);
+export function drawHand(ctx, lm, width, height, color = "#FF6FAE", clear = true) {
+  if (clear) ctx.clearRect(0, 0, width, height);
   if (!lm) return;
   ctx.lineCap = "round";
   ctx.lineWidth = 5;
@@ -111,4 +116,10 @@ export function drawHand(ctx, lm, width, height, color = "#FF6FAE") {
     ctx.fill();
     ctx.stroke();
   }
+}
+
+// Draws every tracked hand (the sign word pages track two). The second hand is lilac.
+export function drawHands(ctx, hands, width, height) {
+  ctx.clearRect(0, 0, width, height);
+  hands.forEach((h, i) => drawHand(ctx, h.lm, width, height, i ? "#9B7BFF" : "#FF6FAE", false));
 }

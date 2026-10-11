@@ -1,6 +1,6 @@
 // Records whole-word sign clips (words-recorder.html). Entry point for that page.
-import { createHandTracker, startCamera, runLoop, drawHand } from "./hands.js";
-import { SIGN_WORDS, NONE, SIGN_FRAMES, PER_FRAME, frameInfo, sliceTake, loadWordSamples, saveWordSamples } from "./signs.js";
+import { createHandTracker, startCamera, runLoop, drawHands } from "./hands.js";
+import { SIGN_WORDS, NONE, SIGN_FRAMES, PER_FRAME, frameHands, upgradeClip, sliceTake, loadWordSamples, saveWordSamples } from "./signs.js";
 import { loadSettings, saveSettings, getItem, setItem, dayKey, loadShop } from "./store.js";
 import { applyFlavor } from "./mascot.js";
 import { MOTION_LETTERS, HINTS, LETTER_VIDEOS } from "./letters.js";
@@ -141,15 +141,15 @@ function finishTake() {
   renderCounts();
 }
 
-function onFrame(lm) {
+function onFrame(lm, hands) {
   const canvas = $("overlay");
-  drawHand(canvas.getContext("2d"), lm, canvas.width, canvas.height);
-  $("handState").textContent = lm ? "Hand found" : "No hand in view";
+  drawHands(canvas.getContext("2d"), hands, canvas.width, canvas.height);
+  $("handState").textContent = hands.length === 2 ? "Both hands found" : lm ? "Hand found" : "No hand in view";
   $("handState").classList.toggle("ok", !!lm);
 
   if (!recording) return;
   const now = performance.now();
-  if (lm) recording.frames.push({ t: now, ...frameInfo(lm, aspect, settings.leftHanded) });
+  if (hands.length) recording.frames.push({ t: now, slots: frameHands(hands, aspect, settings.leftHanded) });
   const done = (now - recording.start) / TAKE_MS;
   $("progressFill").style.width = `${Math.min(1, done) * 100}%`;
   if (done >= 1) finishTake();
@@ -185,15 +185,17 @@ async function importCSV(files) {
     const head = rows.shift().split(",");
     const pi = head.indexOf("person");
     const li = head.indexOf("label");
-    const fi = Array.from({ length: N_FEATURES }, (_, i) => head.indexOf(`w${i}`));
-    if (pi < 0 || li < 0 || fi.includes(-1)) {
+    // Two-hand CSVs have w0..w1349; older one-hand ones have w0..w659 (upgraded on import).
+    const width = head.includes(`w${N_FEATURES - 1}`) ? N_FEATURES : head.filter((h) => /^w\d+$/.test(h)).length;
+    const fi = Array.from({ length: width }, (_, i) => head.indexOf(`w${i}`));
+    if (pi < 0 || li < 0 || !width || fi.includes(-1)) {
       status(`${file.name} isn't a word-recorder CSV, so it was skipped.`);
       continue;
     }
     for (const row of rows) {
       const cols = row.split(",");
-      const f = fi.map((i) => Number(cols[i]));
-      if (f.some(Number.isNaN)) continue;
+      const f = upgradeClip(fi.map((i) => Number(cols[i])));
+      if (!f || f.some(Number.isNaN)) continue;
       samples.push({ person: cols[pi], label: cols[li].toUpperCase(), f });
       added += 1;
     }
@@ -231,7 +233,7 @@ document.addEventListener("keydown", (e) => {
   const video = $("video");
   try {
     $("camStatus").textContent = "Loading hand tracker";
-    const tracker = await createHandTracker();
+    const tracker = await createHandTracker({ numHands: 2 }); // many signs use both hands
     $("camStatus").textContent = "Starting camera";
     await startCamera(video);
     aspect = video.videoWidth / video.videoHeight || 4 / 3;

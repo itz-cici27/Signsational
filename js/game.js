@@ -662,6 +662,7 @@ function openMysteryBox(box) {
   renderShop();
   $("coinDisplay").textContent = progress.coins;
   showMysteryBox(box, item, {
+    sound: settings.sound,
     onEquip: (id) => {
       if (!shop.equipped.includes(id)) shop.equipped.push(id);
       persistShop();
@@ -1013,14 +1014,14 @@ function finishWordSet() {
 }
 
 // ---------- game loop ----------
-function onFrame(lm) {
+function onFrame(lm, hands) {
   const canvas = $("overlay");
   drawHand(canvas.getContext("2d"), lm, canvas.width, canvas.height);
   if ($("play").hidden || play.busy || !classifier) return;
 
   const target = currentTarget();
   if (isMotion(target)) {
-    onMotionFrame(lm, target);
+    onMotionFrame(lm, hands, target);
     return;
   }
   const rule = STRICTNESS[settings.strictness] || STRICTNESS.normal;
@@ -1045,13 +1046,14 @@ function onFrame(lm) {
 }
 
 // J and Z: the clip model watches the last 0.8 seconds of movement.
-function onMotionFrame(lm, target) {
+// Letters track one hand, so `hands` holds at most one (the other clip slot stays empty).
+function onMotionFrame(lm, hands, target) {
   if (!lm) {
     $("seeing").textContent = "I can't see a hand yet. Hold it up inside the frame.";
     return;
   }
   const now = performance.now();
-  signBuffer.push(now, lm, aspect, settings.leftHanded);
+  signBuffer.push(now, hands, aspect, settings.leftHanded);
   if (++frameNo % PREDICT_EVERY) return;
   const clip = signBuffer.clip(now);
   if (!clip) return;

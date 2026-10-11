@@ -14,7 +14,10 @@ Training data for the whole-word signs (`train_words.py` → `model/words.json`)
   no commercial use. Cite Li et al., "Word-level Deep Sign Language Recognition from
   Video: A New Large-scale Dataset and Methods Comparison", WACV 2020.
 
-Each row is one 0.8-second clip: `person`, `label`, then `w0`–`w659` (15 frames × 44 numbers; see `js/signs.js`).
+Each row is one 0.8-second clip: `person`, `label`, then `w0`–`w1349` (15 frames × 2 hands ×
+45 numbers; see `js/signs.js`). Older one-hand CSVs (`w0`–`w659`, 15 frames × 44 numbers) still
+work: `train_words.py` and the word recorder put that hand in one slot and mark the other hand
+missing. `laplaces42.csv` and the team's `words_*.csv` recordings are in the old format.
 
 ## License of the converted data
 

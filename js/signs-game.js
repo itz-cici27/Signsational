@@ -1,5 +1,5 @@
 // Play screen for whole-word signs (signs.html). Entry point: signs.html?word=HELLO
-import { createHandTracker, startCamera, runLoop, drawHand } from "./hands.js";
+import { createHandTracker, startCamera, runLoop, drawHands } from "./hands.js";
 import { SIGN_WORDS, NONE, SignBuffer, loadSignClassifier, signRewards } from "./signs.js";
 import { loadSettings, loadProgress, saveProgress, bumpStreak, currentStreak, loadShop, recordStat } from "./store.js";
 import { mascotSVG, applyFlavor } from "./mascot.js";
@@ -126,9 +126,9 @@ function nextSign() {
   showSign();
 }
 
-function onFrame(lm) {
+function onFrame(lm, hands) {
   const canvas = $("overlay");
-  drawHand(canvas.getContext("2d"), lm, canvas.width, canvas.height);
+  drawHands(canvas.getContext("2d"), hands, canvas.width, canvas.height);
   if (play.busy) return;
   const now = performance.now();
 
@@ -136,7 +136,7 @@ function onFrame(lm) {
     $("seeing").textContent = "I can't see a hand yet. Hold it up inside the frame.";
     return;
   }
-  buffer.push(now, lm, aspect, settings.leftHanded);
+  buffer.push(now, hands, aspect, settings.leftHanded);
   if (++frameNo % PREDICT_EVERY) return;
   const clip = buffer.clip(now);
   if (!clip) return; // still filling up the last second
@@ -248,7 +248,7 @@ $("celebrate").addEventListener("close", nextSign);
   const video = $("video");
   try {
     $("camStatus").textContent = "Loading hand tracker";
-    const tracker = await createHandTracker();
+    const tracker = await createHandTracker({ numHands: 2 }); // many signs use both hands
     $("camStatus").textContent = "Starting camera";
     await startCamera(video);
     aspect = video.videoWidth / video.videoHeight || 4 / 3;

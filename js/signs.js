@@ -1,20 +1,30 @@
 // Whole-word ASL signs (HELLO, THANK YOU, ...). Unlike letters, these involve
 // motion, so the model looks at a short clip instead of a single frame.
 //
-// A clip is 15 frames resampled evenly across the last 0.8 seconds. Each frame
-// becomes 44 numbers: the handshape (21 landmarks, x and y, centered on the
-// wrist and scaled by palm size) plus how far the wrist has moved since the
-// start of the clip. 15 x 44 = 660 numbers per clip.
+// A clip is 15 frames resampled evenly across the last 0.8 seconds. Many signs use
+// both hands, so each frame has two hand slots, filled by MediaPipe's "Left"/"Right"
+// label (neither hand is treated as the main one). Each slot is 45 numbers: the
+// handshape (21 landmarks, x and y, centered on that wrist and scaled by palm size),
+// where that wrist is compared with the middle of the hands at the start of the clip,
+// and 1 if the hand is there (all zeros if it isn't). 15 x 2 x 45 = 1350 per clip.
 //
 // The z (depth) coordinate is left out so we can reuse the open word dataset
 // from github.com/laplaces42/sign-language-interpreter, which only has x and y.
+// Older one-hand clips (15 x 44 = 660 numbers) still load: see upgradeClip().
 import { toFeatures } from "./hands.js";
 import { MLP, KNN } from "./classifier.js";
 import { getItem, setItem } from "./store.js";
 
 export const SIGN_FRAMES = 15;
 export const SIGN_WINDOW_MS = 800;
-export const PER_FRAME = 44;
+export const HAND_SLOTS = ["Left", "Right"]; // MediaPipe's labels, in clip order
+export const PER_HAND = 45; // 42 handshape + 2 wrist position + 1 "hand is here"
+export const PER_FRAME = PER_HAND * HAND_SLOTS.length;
+const OLD_PER_FRAME = 44; // one-hand clips recorded before two-hand support
+// One-hand clips (old recordings, letter handshapes) go in this slot. It's where the
+// signing hand usually lands: MediaPipe labeled it "Right" in 188 of 228 WLASL videos.
+// Training mirrors every clip into the other slot too.
+export const ONE_HAND_SLOT = 1;
 export const NONE = "NONE"; // "not a word": still hands, fidgeting, letters
 const MAX_GAP_MS = 150; // a clip is invalid if the hand vanished for longer than this
 
@@ -699,26 +709,60 @@ export const signRewards = (done) => (done ? 5 : 20);
 
 // ---------- features ----------
 
-// One video frame -> handshape (42 numbers) plus wrist position and palm size.
-export function frameInfo(lm, aspect, leftHanded) {
+// One hand -> handshape (42 numbers) plus wrist position and palm size.
+function handInfo(lm, aspect, leftHanded) {
   const shape = toFeatures(lm, aspect, leftHanded).filter((_, i) => i % 3 !== 2); // drop z
   const flip = leftHanded ? -1 : 1;
   const size = Math.hypot((lm[9].x - lm[0].x) * aspect, lm[9].y - lm[0].y) || 1;
   return { shape, wx: flip * lm[0].x * aspect, wy: lm[0].y, size };
 }
 
-// SIGN_FRAMES frame infos -> one 660-number clip.
+// The hands in one video frame ([{ lm, label }]) -> one entry per slot (null if empty).
+// Left-handed signers are mirrored, which also swaps which slot each hand goes in.
+export function frameHands(hands, aspect, leftHanded) {
+  const slots = HAND_SLOTS.map(() => null);
+  for (const { lm, label } of hands) {
+    let i = HAND_SLOTS.indexOf(label);
+    if (i < 0) i = ONE_HAND_SLOT;
+    if (leftHanded) i = HAND_SLOTS.length - 1 - i;
+    if (!slots[i]) slots[i] = handInfo(lm, aspect, leftHanded);
+  }
+  return slots;
+}
+
+// SIGN_FRAMES frames (each a list of slots) -> one clip of SIGN_FRAMES * PER_FRAME numbers.
 export function clipFeatures(frames) {
-  const size = frames.reduce((a, f) => a + f.size, 0) / frames.length;
+  const present = frames.flatMap((slots) => slots.filter(Boolean));
+  const size = present.reduce((a, h) => a + h.size, 0) / present.length;
+  // Wrist positions are measured from the middle of the hands in the first frame.
+  const first = frames[0].filter(Boolean);
+  const ox = first.reduce((a, h) => a + h.wx, 0) / first.length;
+  const oy = first.reduce((a, h) => a + h.wy, 0) / first.length;
   const out = [];
-  for (const f of frames) {
-    out.push(...f.shape, (f.wx - frames[0].wx) / size, (f.wy - frames[0].wy) / size);
+  for (const slots of frames) {
+    for (const h of slots) {
+      if (h) out.push(...h.shape, (h.wx - ox) / size, (h.wy - oy) / size, 1);
+      else for (let i = 0; i < PER_HAND; i++) out.push(0);
+    }
   }
   return out;
 }
 
-// Resample timed frames ({ t, ...frameInfo }, sorted by t) between start and end.
-// Returns null if the hand was missing for part of that stretch.
+// An old one-hand clip (660 numbers) -> the two-hand format, other hand marked missing.
+export function upgradeClip(f) {
+  if (f.length === SIGN_FRAMES * PER_FRAME) return f;
+  if (f.length !== SIGN_FRAMES * OLD_PER_FRAME) return null;
+  const out = [];
+  for (let k = 0; k < SIGN_FRAMES; k++) {
+    const hand = [...f.slice(k * OLD_PER_FRAME, (k + 1) * OLD_PER_FRAME), 1];
+    const empty = new Array(PER_HAND).fill(0);
+    out.push(...(ONE_HAND_SLOT === 0 ? [...hand, ...empty] : [...empty, ...hand]));
+  }
+  return out;
+}
+
+// Resample timed frames ({ t, slots }, sorted by t) between start and end.
+// Returns null if no hand was in view for part of that stretch.
 export function clipAt(frames, start, end) {
   const picked = [];
   let j = 0;
@@ -726,7 +770,7 @@ export function clipAt(frames, start, end) {
     const t = start + ((end - start) * i) / (SIGN_FRAMES - 1);
     while (j + 1 < frames.length && Math.abs(frames[j + 1].t - t) <= Math.abs(frames[j].t - t)) j++;
     if (!frames[j] || Math.abs(frames[j].t - t) > MAX_GAP_MS) return null;
-    picked.push(frames[j]);
+    picked.push(frames[j].slots);
   }
   return clipFeatures(picked);
 }
@@ -750,8 +794,10 @@ export class SignBuffer {
     this.frames = [];
   }
 
-  push(t, lm, aspect, leftHanded) {
-    this.frames.push({ t, ...frameInfo(lm, aspect, leftHanded) });
+  // hands: [{ lm, label }] for this frame (frames with no hands are skipped).
+  push(t, hands, aspect, leftHanded) {
+    if (!hands.length) return;
+    this.frames.push({ t, slots: frameHands(hands, aspect, leftHanded) });
     while (this.frames.length && this.frames[0].t < t - SIGN_WINDOW_MS - 300) this.frames.shift();
   }
 
@@ -766,7 +812,9 @@ export class SignBuffer {
 
 // ---------- storage + model ----------
 
-export const loadWordSamples = () => getItem("sls_word_samples", []);
+// Clips saved in this browser; older one-hand clips are upgraded as they load.
+export const loadWordSamples = () =>
+  getItem("sls_word_samples", []).map((s) => ({ ...s, f: upgradeClip(s.f) })).filter((s) => s.f);
 export const saveWordSamples = (s) => setItem("sls_word_samples", s);
 
 // MLP from model/words.json (trained by train_words.py), or kNN on clips
@@ -776,7 +824,9 @@ export async function loadSignClassifier() {
     const res = await fetch("model/words.json", { cache: "no-store" });
     if (res.ok) {
       const json = await res.json();
-      if (json.layers) return new MLP(json);
+      // A model trained before two-hand clips expects the old size: skip it.
+      if (json.layers && json.per_frame === PER_FRAME) return new MLP(json);
+      if (json.layers) console.warn("model/words.json is the old one-hand format. Run train_words.py again.");
     }
   } catch {
     // no trained word model yet
