@@ -314,11 +314,7 @@ function renderHome() {
   else if (!classifier) {
     note.innerHTML = 'No letter model yet. Open the <a href="recorder.html">recorder</a>, record a few letters, and they\u2019ll work here right away.';
   } else if (classifier.kind === "mlp") {
-    const acc = classifier.info && classifier.info.mean_person_accuracy;
-    // Count J and Z too: they're recognised by the motion model (model/words.json).
-    const known = ALL_LETTERS.filter(knows).length;
-    note.textContent = `Using the trained model: ${known === ALL_LETTERS.length ? `all ${known}` : known} letters` +
-      (acc ? `, ${Math.round(acc * 100)}% accurate on signers it never trained on.` : ".");
+    note.textContent = "";
   } else {
     note.innerHTML = `Quick-start mode, using ${classifier.X.length} samples recorded in this browser. Run <code>train.py</code> for the full model.`;
   }
