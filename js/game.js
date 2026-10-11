@@ -1,6 +1,6 @@
 import { createHandTracker, startCamera, stopCamera, runLoop, toFeatures, drawHand } from "./hands.js";
 import { loadClassifier } from "./classifier.js";
-import { LETTERS, HINTS, WORD_SETS, SHOP_ITEMS, MOTION_LETTERS, LETTER_VIDEOS, letterPhoto } from "./letters.js";
+import { LETTERS, HINTS, WORD_SETS, SHOP_ITEMS, SHOP_RARITIES, MOTION_LETTERS, LETTER_VIDEOS, letterPhoto } from "./letters.js";
 import { NONE, SignBuffer, loadSignClassifier, SIGN_WORDS, signRewards } from "./signs.js";
 import {
   loadSettings, saveSettings, loadProgress, saveProgress, bumpStreak, currentStreak,
@@ -575,27 +575,52 @@ const signPageUrl = (words) => `signs.html?words=${encodeURIComponent(words.join
 function renderShop() {
   $("shopCoins").textContent = progress.coins || 0;
   const grid = $("shopGrid");
-  grid.innerHTML = SHOP_ITEMS.map((item) => {
-    const owned = shop.owned.includes(item.id);
-    const equipped = shop.equipped.includes(item.id);
-    const canAfford = (progress.coins || 0) >= item.price;
+  grid.innerHTML = "";
 
-    let actionText, actionClass;
-    if (equipped) { actionText = "Unequip"; actionClass = "is-equipped"; }
-    else if (owned) { actionText = "Equip"; actionClass = "is-owned"; }
-    else if (canAfford) { actionText = `Buy \u00B7 ${item.price}`; actionClass = ""; }
-    else { actionText = `${item.price}`; actionClass = "is-expensive"; }
+  SHOP_RARITIES.forEach((rarity) => {
+    const items = SHOP_ITEMS.filter((i) => i.rarity === rarity.id);
+    if (!items.length) return;
 
-    return `<button class="shop-item ${actionClass}" data-item="${item.id}" ${!owned && !canAfford ? "disabled" : ""}>
-      <span class="shop-emoji">${item.emoji}</span>
-      <span class="shop-name">${item.name}</span>
-      <span class="shop-desc">${item.description}</span>
-      <span class="shop-action">${actionText}</span>
-    </button>`;
-  }).join("");
+    const section = document.createElement("div");
+    section.className = "shop-section";
+    section.innerHTML = `<h3 class="shop-rarity" style="--rarity-color: ${rarity.color}">${rarity.label}</h3>`;
 
-  grid.querySelectorAll(".shop-item").forEach((btn) => {
-    btn.addEventListener("click", () => handleShopClick(btn.dataset.item));
+    const itemGrid = document.createElement("div");
+    itemGrid.className = "shop-item-grid";
+
+    items.forEach((item) => {
+      const owned = shop.owned.includes(item.id);
+      const equipped = shop.equipped.includes(item.id);
+      const canAfford = (progress.coins || 0) >= item.price;
+
+      let actionText, actionClass;
+      if (equipped) { actionText = "Unequip"; actionClass = "is-equipped"; }
+      else if (owned) { actionText = "Equip"; actionClass = "is-owned"; }
+      else if (canAfford) { actionText = `Buy \u00B7 ${item.price}`; actionClass = ""; }
+      else { actionText = `${item.price}`; actionClass = "is-expensive"; }
+
+      const btn = document.createElement("button");
+      btn.className = `shop-item ${actionClass}`;
+      btn.dataset.item = item.id;
+      btn.disabled = !owned && !canAfford;
+      btn.style.setProperty("--rarity-color", rarity.color);
+      if (rarity.bg.startsWith("linear")) {
+        btn.style.backgroundImage = rarity.bg;
+      } else {
+        btn.style.backgroundColor = rarity.bg;
+      }
+      btn.innerHTML = `
+        <span class="shop-rarity-dot" aria-label="${rarity.label}"></span>
+        <span class="shop-emoji">${item.emoji}</span>
+        <span class="shop-name">${item.name}</span>
+        <span class="shop-desc">${item.description}</span>
+        <span class="shop-action">${actionText}</span>`;
+      btn.addEventListener("click", () => handleShopClick(item.id));
+      itemGrid.append(btn);
+    });
+
+    section.append(itemGrid);
+    grid.append(section);
   });
 }
 

@@ -656,18 +656,33 @@ legend { font-weight: 700; padding: 0 0.4rem; }
   margin: 0 auto 1.5rem;
 }
 .shop-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.shop-section { }
+.shop-rarity {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--ink);
+  margin: 0 0 0.6rem;
+  padding-left: 0.2rem;
+}
+.shop-item-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1rem;
 }
 .shop-item {
+  position: relative;
   text-align: center;
   font: inherit;
   color: var(--ink);
-  background: var(--white);
+  background-color: var(--white);
   border: 3px solid var(--ink);
   border-radius: 20px;
-  padding: 1rem 0.8rem;
+  padding: 1rem 0.8rem 0.8rem;
   box-shadow: 0 4px 0 var(--ink);
   cursor: pointer;
   display: grid;
@@ -677,6 +692,16 @@ legend { font-weight: 700; padding: 0 0.4rem; }
 }
 .shop-item:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
 .shop-item:disabled { opacity: 0.45; cursor: not-allowed; }
+.shop-rarity-dot {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rarity-color);
+  border: 2px solid var(--ink);
+}
 .shop-emoji { font-size: 2.2rem; }
 .shop-name { font-family: var(--display); font-weight: 600; font-size: 1.05rem; }
 .shop-desc { font-size: 0.85rem; color: var(--muted); }

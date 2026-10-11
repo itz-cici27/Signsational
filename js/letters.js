@@ -60,13 +60,48 @@ export const WORD_SETS = [
   { id: "w4", name: "Super Speller", reward: 65, words: ["PURPLE", "BRIGHT", "BASKET", "SIMPLE"] },
 ];
 
+export const SHOP_RARITIES = [
+  { id: "common", label: "Common", color: "#7a8b99", bg: "#F0EEF3" },
+  { id: "uncommon", label: "Uncommon", color: "#2FA87A", bg: "#E6F7EF" },
+  { id: "rare", label: "Rare", color: "#4A90D9", bg: "#E4EEFA" },
+  { id: "epic", label: "Epic", color: "#9B59B6", bg: "#F0E4FA" },
+  { id: "legendary", label: "Legendary", color: "#FF6FAE", bg: "linear-gradient(135deg, #FFF0F7 0%, #FFF6E0 50%, #F0F0FF 100%)" },
+];
+
 export const SHOP_ITEMS = [
-  { id: "bow", name: "Pink Bow", price: 50, emoji: "\u{1F380}", description: "A cute bow for Mochi" },
-  { id: "star", name: "Star Badge", price: 60, emoji: "\u2B50", description: "A shiny badge of honor" },
-  { id: "sunglasses", name: "Cool Shades", price: 75, emoji: "\u{1F576}\uFE0F", description: "Looking cool!" },
-  { id: "scarf", name: "Cozy Scarf", price: 80, emoji: "\u{1F9E3}", description: "Warm and stylish" },
-  { id: "partyhat", name: "Party Hat", price: 100, emoji: "\u{1F389}", description: "Time to celebrate!" },
-  { id: "flower", name: "Flower Crown", price: 120, emoji: "\u{1F33A}", description: "A crown of flowers" },
-  { id: "crown", name: "Royal Crown", price: 150, emoji: "\u{1F451}", description: "Fit for royalty" },
-  { id: "cape", name: "Hero Cape", price: 200, emoji: "\u{1F9B8}", description: "Every hero needs a cape" },
+  // Common (15–40 coins)
+  { id: "bow", name: "Pink Bow", price: 15, emoji: "\u{1F380}", description: "A cute bow for Mochi", rarity: "common" },
+  { id: "star", name: "Star Badge", price: 20, emoji: "\u2B50", description: "A shiny badge of honor", rarity: "common" },
+  { id: "heart", name: "Heart Pin", price: 25, emoji: "\u2764\uFE0F", description: "Wear your heart on top", rarity: "common" },
+  { id: "leaf", name: "Lucky Leaf", price: 30, emoji: "\u{1F343}", description: "A little extra luck", rarity: "common" },
+  { id: "cherry", name: "Cherry", price: 30, emoji: "\u{1F352}", description: "Sweet on top", rarity: "common" },
+  { id: "balloon", name: "Balloon", price: 35, emoji: "\u{1F388}", description: "Up, up, and away!", rarity: "common" },
+
+  // Uncommon (50–90 coins)
+  { id: "sunglasses", name: "Cool Shades", price: 50, emoji: "\u{1F576}\uFE0F", description: "Looking cool!", rarity: "uncommon" },
+  { id: "scarf", name: "Cozy Scarf", price: 60, emoji: "\u{1F9E3}", description: "Warm and stylish", rarity: "uncommon" },
+  { id: "partyhat", name: "Party Hat", price: 65, emoji: "\u{1F389}", description: "Time to celebrate!", rarity: "uncommon" },
+  { id: "headband", name: "Sweatband", price: 70, emoji: "\u{1F3BD}", description: "Training hard!", rarity: "uncommon" },
+  { id: "beret", name: "Beret", price: 75, emoji: "\u{1F3A8}", description: "Très chic!", rarity: "uncommon" },
+  { id: "music", name: "Headphones", price: 85, emoji: "\u{1F3B5}", description: "Vibing out", rarity: "uncommon" },
+
+  // Rare (100–175 coins)
+  { id: "flower", name: "Flower Crown", price: 100, emoji: "\u{1F33A}", description: "A crown of flowers", rarity: "rare" },
+  { id: "tophat", name: "Top Hat", price: 120, emoji: "\u{1F3A9}", description: "Feeling fancy", rarity: "rare" },
+  { id: "butterfly", name: "Butterfly Wings", price: 140, emoji: "\u{1F98B}", description: "Ready to fly!", rarity: "rare" },
+  { id: "tiara", name: "Tiara", price: 150, emoji: "\u{1F48E}", description: "Sparkle and shine", rarity: "rare" },
+  { id: "antenna", name: "Alien Antenna", price: 165, emoji: "\u{1F47D}", description: "Out of this world", rarity: "rare" },
+
+  // Epic (200–400 coins)
+  { id: "crown", name: "Royal Crown", price: 200, emoji: "\u{1F451}", description: "Fit for royalty", rarity: "epic" },
+  { id: "cape", name: "Hero Cape", price: 250, emoji: "\u{1F9B8}", description: "Every hero needs a cape", rarity: "epic" },
+  { id: "wizard", name: "Wizard Hat", price: 300, emoji: "\u{1FA84}", description: "Pure magic", rarity: "epic" },
+  { id: "flame", name: "Fire Crown", price: 350, emoji: "\u{1F525}", description: "On fire!", rarity: "epic" },
+  { id: "astronaut", name: "Space Helmet", price: 400, emoji: "\u{1F680}", description: "To the moon!", rarity: "epic" },
+
+  // Legendary (500+ coins)
+  { id: "halo", name: "Golden Halo", price: 500, emoji: "\u{1F31F}", description: "Angelic glow", rarity: "legendary" },
+  { id: "rainbow", name: "Rainbow Aura", price: 750, emoji: "\u{1F308}", description: "Maximum sparkle", rarity: "legendary" },
+  { id: "dragon", name: "Dragon Horns", price: 1000, emoji: "\u{1F432}", description: "Legendary power", rarity: "legendary" },
+  { id: "unicorn", name: "Unicorn Horn", price: 1500, emoji: "\u{1F984}", description: "One of a kind", rarity: "legendary" },
 ];
