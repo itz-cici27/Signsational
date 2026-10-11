@@ -28,6 +28,7 @@ import io
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -45,8 +46,14 @@ MODEL_URL = ("https://storage.googleapis.com/mediapipe-models/hand_landmarker/"
              "hand_landmarker/float16/1/hand_landmarker.task")
 KAGGLE_DATASET = "risangbaskoro/wlasl-processed"
 
-# WLASL gloss -> word in js/signs.js
-WORDS = {"yes": "YES", "no": "NO", "eat": "EAT"}
+# Words in js/signs.js (SIGN_WORDS) to take from WLASL. Each one's WLASL gloss is the
+# word in lower case. This file is rewritten each run, so keep every word already in it.
+SIGNS = """
+YES, NO, EAT,
+HELP, NAME, DEAF, UNDERSTAND, AGAIN, WHAT, WHERE, WANT, NEED, MORE, FINISH,
+BATHROOM, WATER, DRINK, MOTHER, FATHER, FAMILY, FRIEND, LIKE, GOOD, WHO
+"""
+WORDS = {w.strip().lower(): w.strip() for w in SIGNS.split(",")}
 
 # Must match js/signs.js
 SIGN_FRAMES = 15
@@ -96,12 +103,21 @@ def kaggle_download(video_ids, dest: Path) -> Path:
             continue
         print(f"\rDownloading videos from Kaggle: {n}/{len(video_ids)}", end="", flush=True)
         url = f"https://www.kaggle.com/api/v1/datasets/download/{KAGGLE_DATASET}/videos%2F{vid}.mp4"
-        try:
-            data = urllib.request.urlopen(urllib.request.Request(url, headers={"Authorization": auth}), timeout=60).read()
-        except urllib.error.HTTPError as err:
-            if err.code in (401, 403):
-                sys.exit("\nKaggle rejected the token. Make a new one at kaggle.com > Settings > API.")
-            continue  # 404: not every WLASL video made it into the Kaggle copy
+        data = None
+        while data is None:
+            try:
+                data = urllib.request.urlopen(urllib.request.Request(url, headers={"Authorization": auth}), timeout=60).read()
+            except urllib.error.HTTPError as err:
+                if err.code in (401, 403):
+                    sys.exit("\nKaggle rejected the token. Make a new one at kaggle.com > Settings > API.")
+                if err.code == 429:  # too many requests: wait as long as Kaggle asks, then retry
+                    wait = int(err.headers.get("Retry-After") or 60) + 5
+                    print(f"\nKaggle asked us to slow down. Waiting {wait // 60} min {wait % 60} s...", flush=True)
+                    time.sleep(wait)
+                    continue
+                break  # 404: not every WLASL video made it into the Kaggle copy
+        if data is None:
+            continue
         if data[:2] == b"PK":  # Kaggle zips single files
             with zipfile.ZipFile(io.BytesIO(data)) as z:
                 data = z.read(z.namelist()[0])

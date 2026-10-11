@@ -7,7 +7,7 @@ Training data for the whole-word signs (`train_words.py` → `model/words.json`)
   `tools/import_laplaces_words.py` from `sign_language.csv` in
   [laplaces42/sign-language-interpreter](https://github.com/laplaces42/sign-language-interpreter).
   All of it comes from one signer, so record your own clips too.
-- `wlasl.csv`: YES, NO, and EAT, made by `tools/import_wlasl_words.py` from
+- `wlasl.csv`: YES, NO, EAT, and 21 more words (the list is `SIGNS` in the script), made by `tools/import_wlasl_words.py` from
   [WLASL](https://dxli94.github.io/WLASL/) videos (many signers, one video each).
   Only hand landmarks are kept, never the video. WLASL is licensed under the
   Computational Use of Data Agreement (C-UDA): academic and computational use only,

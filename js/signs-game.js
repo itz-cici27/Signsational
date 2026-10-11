@@ -110,7 +110,8 @@ function showSign() {
   $("signDemo").hidden = true;
   demo.onloadeddata = () => ($("signDemo").hidden = false);
   demo.onerror = () => ($("signDemo").hidden = true); // offline: just leave it out
-  demo.src = s.video;
+  if (s.video) demo.src = s.video;
+  else demo.removeAttribute("src"); // no demo for this word: the hint and SignASL link are enough
   $("seeing").textContent = "";
   setRing(0);
   say(`Sign ${s.word} for me. Repeat it until the ring fills.`);

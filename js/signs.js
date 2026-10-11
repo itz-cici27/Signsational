@@ -70,6 +70,112 @@ export const SIGN_WORDS = [
     video: VIDEO_BASE + "youtube/mp4/dEUvcuoKxsk.mp4",
     hint: "Stretch out your thumb, index finger, and pinky. Keep the middle two fingers down. Face your palm out.",
   },
+  // From WLASL (see data/words/README.md)
+  {
+    word: "HELP", emoji: "\u{1F64B}", slug: "help",
+    video: VIDEO_BASE + "startasl/mp4/help.mp4",
+    hint: "Rest a thumbs-up fist on your other flat palm, then lift both hands up together.",
+  },
+  {
+    word: "NAME", emoji: "\u{1F4DB}", slug: "name",
+    video: null, // no StartASL clip: the sign page shows just the hint
+    hint: "Make an H (two fingers out) with both hands and tap one on top of the other twice.",
+  },
+  {
+    word: "DEAF", emoji: "\u{1F9CF}", slug: "deaf",
+    video: VIDEO_BASE + "startasl/mp4/deaf.mp4",
+    hint: "Touch your index finger near your ear, then near your mouth.",
+  },
+  {
+    word: "UNDERSTAND", emoji: "\u{1F4A1}", slug: "understand",
+    video: null, // no StartASL clip: the sign page shows just the hint
+    hint: "Hold a fist near your forehead and flick your index finger up.",
+  },
+  {
+    word: "AGAIN", emoji: "\u{1F501}", slug: "again",
+    video: VIDEO_BASE + "startasl/mp4/again.mp4",
+    hint: "Flip a bent hand over and tap its fingertips into the palm of your other hand.",
+  },
+  {
+    word: "WHAT", emoji: "\u{1F937}", slug: "what",
+    video: VIDEO_BASE + "startasl/mp4/what.mp4",
+    hint: "Hold both open hands out, palms up, and shake them slightly side to side.",
+  },
+  {
+    word: "WHERE", emoji: "\u{1F4CD}", slug: "where",
+    video: VIDEO_BASE + "startasl/mp4/where.mp4",
+    hint: "Hold your index finger up, palm out, and shake it side to side.",
+  },
+  {
+    word: "WANT", emoji: "\u{1F932}", slug: "want",
+    video: VIDEO_BASE + "startasl/mp4/want.mp4",
+    hint: "Hold both hands out, palms up, fingers bent like claws, and pull them toward you.",
+  },
+  {
+    word: "NEED", emoji: "\u{2757}", slug: "need",
+    video: VIDEO_BASE + "startasl/mp4/need.mp4",
+    hint: "Hook your index finger (the letter X) and bend your wrist down twice.",
+  },
+  {
+    word: "MORE", emoji: "\u{2795}", slug: "more",
+    video: VIDEO_BASE + "startasl/mp4/more.mp4",
+    hint: "Bunch the fingertips of both hands onto your thumbs and tap the fingertips together twice.",
+  },
+  {
+    word: "FINISH", emoji: "\u{2705}", slug: "finish",
+    video: VIDEO_BASE + "startasl/mp4/finish.mp4",
+    hint: "Hold both open hands up, palms facing you, and flip them outward quickly.",
+  },
+  {
+    word: "BATHROOM", emoji: "\u{1F6BD}", slug: "bathroom",
+    video: VIDEO_BASE + "startasl/mp4/bathroom.mp4",
+    hint: "Make the letter T (thumb tucked between your first two fingers) and shake it side to side.",
+  },
+  {
+    word: "WATER", emoji: "\u{1F4A7}", slug: "water",
+    video: VIDEO_BASE + "startasl/mp4/water.mp4",
+    hint: "Make a W (three fingers up) and tap your index finger on your chin twice.",
+  },
+  {
+    word: "DRINK", emoji: "\u{1F964}", slug: "drink",
+    video: VIDEO_BASE + "startasl/mp4/drink.mp4",
+    hint: "Curve your hand into a C, like holding a cup, and tip it toward your mouth.",
+  },
+  {
+    word: "MOTHER", emoji: "\u{1F469}", slug: "mother",
+    video: VIDEO_BASE + "startasl/mp4/mother.mp4",
+    hint: "Spread all five fingers and tap your thumb on your chin.",
+  },
+  {
+    word: "FATHER", emoji: "\u{1F468}", slug: "father",
+    video: VIDEO_BASE + "startasl/mp4/father.mp4",
+    hint: "Spread all five fingers and tap your thumb on your forehead.",
+  },
+  {
+    word: "FAMILY", emoji: "\u{1F46A}", slug: "family",
+    video: VIDEO_BASE + "startasl/mp4/family.mp4",
+    hint: "Make an F with both hands, touching, and circle them outward until your pinkies meet.",
+  },
+  {
+    word: "FRIEND", emoji: "\u{1F91D}", slug: "friend",
+    video: VIDEO_BASE + "startasl/mp4/friend.mp4",
+    hint: "Hook your index fingers together, then flip them and hook them the other way.",
+  },
+  {
+    word: "LIKE", emoji: "\u{1F44D}", slug: "like",
+    video: VIDEO_BASE + "startasl/mp4/like.mp4",
+    hint: "Put an open hand on your chest, then pull it away while pinching your thumb and middle finger together.",
+  },
+  {
+    word: "GOOD", emoji: "\u{1F60C}", slug: "good",
+    video: VIDEO_BASE + "startasl/mp4/good.mp4",
+    hint: "Touch the fingertips of a flat hand to your chin, then move it down onto your other palm.",
+  },
+  {
+    word: "WHO", emoji: "\u{1F9D0}", slug: "who",
+    video: VIDEO_BASE + "startasl/mp4/who.mp4",
+    hint: "Rest your thumb on your chin and wiggle your bent index finger.",
+  },
 ];
 
 export const signRewards = (done) => (done ? 5 : 20);
