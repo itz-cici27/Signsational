@@ -6,9 +6,19 @@
 .sign-video { font-size: 0.95rem; color: var(--muted); }
 .sign-demo { margin: 0; text-align: center; }
 .sign-demo video { display: block; width: 100%; max-width: 280px; margin: 0 auto 4px; border-radius: 16px; border: 3px solid var(--ink); background: #000; }
+.sign-demo video[hidden] { display: none; }
 
 .sign-card .level-num { font-size: 2rem; }
 .sign-card .level-letters { font-size: 1.15rem; letter-spacing: 0.05em; white-space: nowrap; }
+
+/* Small "Trial" pill on words the model is still shaky on (see isTrial in js/signs.js). */
+.trial-tag {
+  display: inline-block; vertical-align: middle;
+  padding: 1px 7px; border-radius: 999px; border: 1.5px solid #2B1B4A;
+  background: var(--sun); color: #2B1B4A; /* fixed dark text: stays readable on yellow in dark mode */
+  font-family: var(--body); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; line-height: 1.4;
+}
+.sign-name .trial-tag { font-size: 0.8rem; }
 
 .word-counts { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
 .word-counts b { font-size: 0.9rem; }

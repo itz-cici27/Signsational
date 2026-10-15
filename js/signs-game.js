@@ -1,6 +1,6 @@
 // Play screen for whole-word signs (signs.html). Entry point: signs.html?word=HELLO
 import { createHandTracker, startCamera, runLoop, drawHands } from "./hands.js";
-import { SIGN_WORDS, NONE, SignBuffer, loadSignClassifier, signRewards } from "./signs.js";
+import { SIGN_WORDS, NONE, SignBuffer, loadSignClassifier, signRewards, isTrial, TRIAL_TAG } from "./signs.js";
 import { loadSettings, loadProgress, saveProgress, bumpStreak, currentStreak, loadShop, recordStat } from "./store.js";
 import { mascotSVG, applyFlavor } from "./mascot.js";
 import { stickerStats, newStickers, stickerSVG } from "./stickers.js";
@@ -104,12 +104,15 @@ function showSign() {
   $("wordCount").textContent = `${play.idx + 1} of ${play.queue.length}`;
   $("targetEmoji").textContent = s.emoji;
   $("signName").textContent = s.word;
+  if (isTrial(classifier, s.word)) $("signName").insertAdjacentHTML("beforeend", " " + TRIAL_TAG);
   $("hint").textContent = s.hint;
   $("signVideo").href = `https://www.signasl.org/sign/${s.slug}`;
   const demo = $("demoVideo");
-  $("signDemo").hidden = true;
-  demo.onloadeddata = () => ($("signDemo").hidden = false);
-  demo.onerror = () => ($("signDemo").hidden = true); // offline: just leave it out
+  // The SignASL link always shows; the video only once it loads (offline: just leave it out).
+  $("signDemo").hidden = false;
+  demo.hidden = true;
+  demo.onloadeddata = () => (demo.hidden = false);
+  demo.onerror = () => (demo.hidden = true);
   if (s.video) demo.src = s.video;
   else demo.removeAttribute("src"); // no demo for this word: the hint and SignASL link are enough
   $("seeing").textContent = "";

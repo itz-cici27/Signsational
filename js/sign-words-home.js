@@ -1,6 +1,6 @@
 // "Sign Words" section on the home page (index.html): one folder per topic.
 // Each card opens signs.html.
-import { SIGN_WORDS, SIGN_TOPICS, loadSignClassifier, signRewards } from "./signs.js";
+import { SIGN_WORDS, SIGN_TOPICS, loadSignClassifier, signRewards, isTrial, TRIAL_TAG } from "./signs.js";
 import { loadProgress } from "./store.js";
 
 const $ = (id) => document.getElementById(id);
@@ -9,6 +9,7 @@ function signCard(s, classifier, done) {
   const trained = !!classifier && classifier.labels.includes(s.word);
   const isDone = done.includes(s.word);
   const status = !classifier ? "Loading…" : !trained ? "Not trained yet" : isDone ? "Learned" : "Ready";
+  const trial = trained && isTrial(classifier, s.word);
 
   const btn = document.createElement("button");
   btn.type = "button";
@@ -16,9 +17,9 @@ function signCard(s, classifier, done) {
   btn.disabled = !trained;
   btn.innerHTML = `
     <span class="level-letters">${s.word}</span>
-    <span class="level-status">${status}</span>
+    <span class="level-status">${status}${trial ? " " + TRIAL_TAG : ""}</span>
     <span class="level-coins"><img class="coin-icon" src="assets/coin.png" alt="coins" aria-hidden="true"> ${signRewards(isDone)}</span>`;
-  btn.setAttribute("aria-label", `Sign the word ${s.word}. ${status}`);
+  btn.setAttribute("aria-label", `Sign the word ${s.word}. ${status}${trial ? ". Trial" : ""}`);
   btn.addEventListener("click", () => (location.href = `signs.html?word=${encodeURIComponent(s.word)}`));
   const li = document.createElement("li");
   li.append(btn);

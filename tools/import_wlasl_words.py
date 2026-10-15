@@ -117,7 +117,7 @@ def kaggle_download(video_ids, dest: Path) -> Path:
             continue
         print(f"\rDownloading videos from Kaggle: {n}/{len(video_ids)}", end="", flush=True)
         url = f"https://www.kaggle.com/api/v1/datasets/download/{KAGGLE_DATASET}/videos%2F{vid}.mp4"
-        data = None
+        data, tries = None, 0
         while data is None:
             try:
                 data = urllib.request.urlopen(urllib.request.Request(url, headers={"Authorization": auth}), timeout=60).read()
@@ -130,6 +130,11 @@ def kaggle_download(video_ids, dest: Path) -> Path:
                     time.sleep(wait)
                     continue
                 break  # 404: not every WLASL video made it into the Kaggle copy
+            except OSError:  # timeout or dropped connection: wait a bit and retry
+                tries += 1
+                if tries > 5:
+                    break
+                time.sleep(10 * tries)
         if data is None:
             continue
         if data[:2] == b"PK":  # Kaggle zips single files

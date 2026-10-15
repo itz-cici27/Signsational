@@ -104,7 +104,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "NAME", topic: "questions", emoji: "\u{1F4DB}", slug: "name",
-    video: null, // no StartASL clip: the sign page shows just the hint
+    video: VIDEO_BASE + "aslsearch/mp4/name.mp4",
     hint: "Make an H (two fingers out) with both hands and tap one on top of the other twice.",
   },
   {
@@ -114,7 +114,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "UNDERSTAND", topic: "basics", emoji: "\u{1F4A1}", slug: "understand",
-    video: null, // no StartASL clip: the sign page shows just the hint
+    video: VIDEO_BASE + "aslsearch/mp4/understand.mp4",
     hint: "Hold a fist near your forehead and flick your index finger up.",
   },
   {
@@ -215,7 +215,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "MEET", topic: "greetings", emoji: "\u{1F91D}", slug: "meet",
-    video: null,
+    video: VIDEO_BASE + "aslsearch/mp4/meet.mp4",
     hint: "Point both index fingers up, palms facing each other, and bring your hands together.",
   },
   {
@@ -225,7 +225,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "STOP", topic: "basics", emoji: "\u{270B}", slug: "stop",
-    video: null,
+    video: VIDEO_BASE + "signlanguagestudent/mp4/stop.mp4",
     hint: "Chop the side of one flat hand down onto the palm of your other hand.",
   },
   {
@@ -240,7 +240,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "SAME", topic: "basics", emoji: "\u{1F7F0}", slug: "same",
-    video: null,
+    video: VIDEO_BASE + "aslsearch/mp4/same.mp4",
     hint: "Point both index fingers forward and bring them together side by side.",
   },
   {
@@ -315,7 +315,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "TALK", topic: "actions", emoji: "\u{1F5E3}\u{FE0F}", slug: "talk",
-    video: null,
+    video: VIDEO_BASE + "signlanguagestudent/mp4/talk.mp4",
     hint: "Hold your index finger at your mouth and move it forward and back a few times.",
   },
   {
@@ -420,12 +420,12 @@ export const SIGN_WORDS = [
   },
   {
     word: "LAUGH", topic: "feelings", emoji: "\u{1F602}", slug: "laugh",
-    video: null,
+    video: VIDEO_BASE + "aslsearch/mp4/laugh.mp4",
     hint: "Brush both index fingers up from the corners of your mouth toward your ears, twice.",
   },
   {
     word: "FEEL", topic: "feelings", emoji: "\u{1FAF6}", slug: "feel",
-    video: null,
+    video: VIDEO_BASE + "aslsearch/mp4/feel.mp4",
     hint: "Brush your middle finger up your chest.",
   },
   {
@@ -435,7 +435,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "LATER", topic: "time", emoji: "\u{23ED}\u{FE0F}", slug: "later",
-    video: null,
+    video: VIDEO_BASE + "aslsearch/mp4/later.mp4",
     hint: "Make an L, rest your thumb on your other palm, and tip your index finger forward.",
   },
   {
@@ -460,7 +460,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "NIGHT", topic: "time", emoji: "\u{1F319}", slug: "night",
-    video: null,
+    video: VIDEO_BASE + "aslsearch/mp4/night.mp4",
     hint: "Tap a bent hand over the back of your other wrist, like the sun setting.",
   },
   {
@@ -505,7 +505,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "THINK", topic: "school", emoji: "\u{1F4AD}", slug: "think",
-    video: null,
+    video: VIDEO_BASE + "signlanguagestudent/mp4/think.mp4",
     hint: "Tap your index finger on your forehead.",
   },
   {
@@ -530,7 +530,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "LANGUAGE", topic: "school", emoji: "\u{1F4AC}", slug: "language",
-    video: null,
+    video: VIDEO_BASE + "signlanguagestudent/mp4/language.mp4",
     hint: "Touch the thumbs of two L hands together, then pull them apart with a little wiggle.",
   },
   {
@@ -640,7 +640,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "TELL", topic: "actions", emoji: "\u{1F4E2}", slug: "tell",
-    video: null,
+    video: VIDEO_BASE + "signlanguagestudent/mp4/tell.mp4",
     hint: "Touch your index finger to your chin, then move it out toward the person.",
   },
   {
@@ -655,7 +655,7 @@ export const SIGN_WORDS = [
   },
   {
     word: "BIG", topic: "actions", emoji: "\u{1F418}", slug: "big",
-    video: null,
+    video: VIDEO_BASE + "signlanguagestudent/mp4/big.mp4",
     hint: "Hold both hands in an L shape in front of you and pull them apart.",
   },
   {
@@ -706,6 +706,12 @@ export const SIGN_WORDS = [
 ];
 
 export const signRewards = (done) => (done ? 5 : 20);
+
+// Words the model still gets wrong a lot (per-word accuracy from train_words.py) get a
+// small "Trial" tag, so players know a miss may be the model's fault, not theirs.
+const TRIAL_BELOW = 0.3;
+export const isTrial = (classifier, word) => (classifier?.info?.per_word?.[word] ?? 1) < TRIAL_BELOW;
+export const TRIAL_TAG = '<span class="trial-tag" title="Still learning this sign: it may not always recognize it">Trial</span>';
 
 // ---------- features ----------
 
