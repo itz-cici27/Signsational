@@ -11,7 +11,7 @@ Most deaf children are born to hearing parents, and many of those families never
 ## Features
 
 - **All 26 letters** — 24 static letters recognized from a single frame, plus J and Z recognized from motion clips
-- **9 ASL signs** — full signs with movement (HELLO, THANK YOU, PLEASE, SORRY, WELCOME, YES, NO, EAT, I LOVE YOU)
+- **130 ASL signs** — full signs with movement across 12 topics (Greetings, Basics, Questions, Food & Needs, People, Feelings, Time, School & Deaf Culture, Animals, Colors, Actions & Describing, Home & Things)
 - **Word spelling** — fingerspell 20 words letter by letter across 4 difficulty sets, plus custom words
 - **Daily streaks & leaderboard** — practice daily to climb the ranks (requires sign-in)
 - **Coin economy & shop** — earn coins from practice, spend them on accessories for Mochi across 5 rarity tiers (Common → Legendary)
@@ -27,7 +27,7 @@ Most deaf children are born to hearing parents, and many of those families never
 1. **Hand tracking.** MediaPipe Hand Landmarker finds 21 points on your hand, in the browser. Video never leaves the device.
 2. **Features.** The 21 points are centered on the wrist and scaled by palm size (63 numbers), so position and distance from the camera don't matter. Left-handed signers are mirrored.
 3. **Classifier.** A neural network (MLP) trained on data from 5 signers using leave-one-signer-out cross-validation. Runs in plain JavaScript — no server needed.
-4. **Motion recognition.** J, Z, and sign words use a clip-based model that watches ~1 second of movement (15 frames resampled into 660 features).
+4. **Motion recognition.** J, Z, and sign words use a clip-based model that watches ~0.8 seconds of movement (15 frames × 2 hand slots × 45 features = 1350 features per clip).
 5. **Game logic.** A letter counts when the model is confident for about half a second, which prevents flickers. Three difficulty modes adjust the threshold.
 
 ## Run it locally
@@ -77,13 +77,16 @@ signs.html              play screen for sign words
 js/game.js              main game logic, tabs, shop, leaderboard
 js/hands.js             MediaPipe setup, camera, feature extraction, drawing
 js/classifier.js        MLP and kNN classifiers
-js/signs.js             clip model for motion letters and sign words
+js/signs.js             clip model for motion letters and sign words (130 words, 12 topics)
 js/letters.js           letter/word/shop data definitions
 js/mascot.js            Mochi SVG with accessories and flavors
 js/stickers.js          achievement sticker system
 js/store.js             localStorage wrapper (settings, progress, shop, stats)
 js/firebase.js          Firebase Auth, Firestore sync, leaderboard
 js/flavor-menu.js       Mochi color picker
+js/mystery-box.js       mystery box shop feature
+js/sfx.js               sound effects
+js/theme.js             dark/light mode toggle
 js/recorder.js          letter data collection UI
 js/words-recorder.js    sign data collection UI
 js/signs-game.js        sign words play screen logic
@@ -91,6 +94,8 @@ js/sign-words-home.js   sign word cards on the Words tab
 
 css/style.css           all styles
 css/signs.css           sign-specific styles
+css/dark.css            dark mode theme
+css/mystery.css         mystery box styles
 
 train.py                letter model training + evaluation
 train_words.py          sign/motion model training + evaluation
@@ -117,5 +122,5 @@ assets/garden.svg       background illustration
 ## Honest limitations
 
 - MVP covers fingerspelling and a few whole signs. Real ASL also uses grammar, facial expressions, and classifiers.
-- Training data comes from 5 signers, so accuracy on very different hands may be lower.
+- Letter training data comes from 5 signers, so accuracy on very different hands may be lower. Sign word data also includes clips from the WLASL open dataset.
 - This is a practice tool for beginners, not a replacement for Deaf teachers.
