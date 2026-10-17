@@ -69,6 +69,9 @@ export const SHOP_RARITIES = [
 ];
 
 export const SHOP_ITEMS = [
+  // Consumables
+  { id: "streak-freeze", name: "Streak Freeze", price: 50, emoji: "\u{1F9CA}", description: "Protects your streak for one missed day", rarity: "uncommon", consumable: true },
+
   // Common (15–40 coins)
   { id: "bow", name: "Pink Bow", price: 15, emoji: "\u{1F380}", description: "A cute bow for Mochi", rarity: "common" },
   { id: "star", name: "Star Badge", price: 20, emoji: "\u2B50", description: "A shiny badge of honor", rarity: "common" },

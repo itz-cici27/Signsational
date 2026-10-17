@@ -91,6 +91,27 @@ code { font-size: 0.95em; background: var(--white); padding: 0 0.3em; border-rad
   padding: 0.3rem 0.9rem;
   white-space: nowrap;
 }
+.freezes {
+  font-family: var(--display);
+  font-weight: 600;
+  background: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.1s;
+  color: inherit;
+  font-size: inherit;
+}
+.freezes:hover { transform: scale(1.08); }
+.freezes:active { transform: scale(0.95); }
+.freezes.is-shake { animation: shake 0.4s; }
+@keyframes shake {
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+}
 
 /* ---------- buttons ---------- */
 .btn {
@@ -464,6 +485,11 @@ legend { font-weight: 700; padding: 0 0.4rem; }
 .dialog-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-top: 1.25rem; }
 .dialog-actions [hidden] { display: none; }
 
+#freezeDialog { text-align: center; }
+#freezeDialog h2 { font-size: 1.8rem; }
+.freeze-cost { font-family: var(--display); font-weight: 700; font-size: 1.1rem; margin-top: 1rem; }
+.freeze-balance { color: var(--muted); font-size: 0.9rem; }
+
 .celebrate { text-align: center; }
 .big-sticker {
   margin: 0.5rem auto 1rem;
@@ -784,6 +810,11 @@ legend { font-weight: 700; padding: 0 0.4rem; }
 .lb-streak {
   font-family: var(--display);
   font-weight: 600;
+  white-space: nowrap;
+}
+.lb-best {
+  font-size: 0.8rem;
+  color: var(--muted);
   white-space: nowrap;
 }
 

@@ -50,6 +50,7 @@ export async function saveToCloud(progress, shopData) {
       displayName: user.displayName || "Anonymous",
       photoURL: user.photoURL || "",
       streak: progress.streak || 0,
+      bestStreak: progress.bestStreak || 0,
       lastDay: progress.lastDay || null,
     });
   } catch (err) {
@@ -82,6 +83,7 @@ export async function ensureLeaderboardEntry(progress) {
         displayName: user.displayName || "Anonymous",
         photoURL: user.photoURL || "",
         streak: progress.streak || 0,
+        bestStreak: progress.bestStreak || 0,
         lastDay: progress.lastDay || null,
       });
     }

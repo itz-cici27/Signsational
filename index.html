@@ -27,6 +27,9 @@
       <span class="streak" title="Days practiced in a row">
         <span aria-hidden="true">🔥</span> <b id="streakCount">0</b> <span class="streak-label">day streak</span>
       </span>
+      <button class="freezes" id="freezeDisplay" type="button" title="Buy a streak freeze (50 coins)">
+        <span aria-hidden="true">🧊</span> <b id="freezeCount">0</b>
+      </button>
 <button class="btn btn-quiet theme-btn" id="themeBtn" type="button" aria-label="Dark mode" aria-pressed="false"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="#CDB4F5" stroke="#2B1B4A" stroke-width="1.8" stroke-linejoin="round"/><circle cx="18" cy="5" r="1.2" fill="#FFD23F"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><g stroke="#FFD23F" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g><circle cx="12" cy="12" r="4.6" fill="#FFD23F" stroke="#2B1B4A" stroke-width="1.6"/></svg></button>
       <button class="btn btn-quiet" id="settingsBtn" type="button">Settings</button>
       <button class="btn btn-quiet btn-auth" id="authBtn" type="button">Sign in</button>
@@ -236,6 +239,18 @@
     </div>
   </dialog>
 
+
+  <dialog id="freezeDialog" aria-labelledby="freezeTitle">
+    <h2 id="freezeTitle">🧊 Streak Freeze</h2>
+    <p>Streak freezes protect your streak when you miss a day of practice.</p>
+    <p>You have <b id="freezeDialogCount">0</b> freeze(s).</p>
+    <p class="freeze-cost">Buy one for <img class="coin-icon" src="assets/coin.png" alt="" aria-hidden="true"> <b>50</b> coins?</p>
+    <p class="freeze-balance">Your balance: <img class="coin-icon" src="assets/coin.png" alt="" aria-hidden="true"> <b id="freezeDialogCoins">0</b></p>
+    <div class="dialog-actions">
+      <button class="btn" id="freezeBuyBtn" type="button">Buy streak freeze</button>
+      <button class="btn btn-quiet" id="freezeCloseBtn" type="button">Close</button>
+    </div>
+  </dialog>
 
   <script type="module" src="js/flavor-menu.js"></script>
   <script type="module" src="js/game.js"></script>

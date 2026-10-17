@@ -29,7 +29,7 @@ export const DEFAULT_SETTINGS = {
 export const loadSettings = () => ({ ...DEFAULT_SETTINGS, ...getItem("sls_settings", {}) });
 export const saveSettings = (s) => setItem("sls_settings", s);
 
-export const loadProgress = () => ({ completed: [], lettersCompleted: [], streak: 0, lastDay: null, coins: 0, wordsCompleted: [], ...getItem("sls_progress", {}) });
+export const loadProgress = () => ({ completed: [], lettersCompleted: [], streak: 0, bestStreak: 0, lastDay: null, coins: 0, wordsCompleted: [], freezes: 2, ...getItem("sls_progress", {}) });
 export const saveProgress = (p) => setItem("sls_progress", p);
 
 export const loadShop = () => ({ owned: [], equipped: [], flavor: "matcha", ...getItem("sls_shop", {}) });
@@ -76,12 +76,24 @@ export function statDifficulty(s) {
 export function bumpStreak(p) {
   const today = dayKey();
   if (p.lastDay === today) return p;
-  p.streak = p.lastDay === yesterdayKey() ? p.streak + 1 : 1;
+  if (p.lastDay === yesterdayKey()) {
+    p.streak += 1;
+  } else if (p.streak > 0 && (p.freezes ?? 0) > 0) {
+    // Missed a day but have a streak freeze — keep the streak, consume a freeze.
+    p.freezes -= 1;
+    p.streak += 1;
+  } else {
+    p.streak = 1;
+  }
+  if (p.streak > (p.bestStreak || 0)) p.bestStreak = p.streak;
   p.lastDay = today;
   return p;
 }
 
-// Streak shown in the header (resets to 0 if a day was missed).
+// Streak shown in the header (resets to 0 if a day was missed and no freezes are left).
 export function currentStreak(p) {
-  return p.lastDay === dayKey() || p.lastDay === yesterdayKey() ? p.streak : 0;
+  if (p.lastDay === dayKey() || p.lastDay === yesterdayKey()) return p.streak;
+  // Streak can still be saved if the user has a freeze (consumed when they next practice).
+  if (p.streak > 0 && (p.freezes ?? 0) > 0) return p.streak;
+  return 0;
 }

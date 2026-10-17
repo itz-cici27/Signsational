@@ -60,6 +60,8 @@ document.querySelectorAll("[data-mascot]").forEach((el) => (el.innerHTML = masco
 function renderHeader() {
   $("coinDisplay").textContent = progress.coins || 0;
   $("streakCount").textContent = currentStreak(progress);
+  const fc = $("freezeCount");
+  if (fc) fc.textContent = progress.freezes ?? 0;
 }
 
 function say(text, mood = "") {

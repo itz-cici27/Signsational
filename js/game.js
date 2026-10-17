@@ -69,6 +69,11 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 let settings = loadSettings();
 let progress = loadProgress();
+// Backfill bestStreak for users who had a streak before this field existed.
+if ((progress.streak || 0) > (progress.bestStreak || 0)) {
+  progress.bestStreak = progress.streak;
+  saveProgress(progress);
+}
 let shop = loadShop();
 let classifier = null;
 let signClassifier = null; // clip model for J and Z (model/words.json)
@@ -221,9 +226,47 @@ function switchTab(tab) {
   renderTab(tab);
 }
 
+function renderFreezeCount() {
+  const el = $("freezeCount");
+  if (el) el.textContent = progress.freezes ?? 0;
+}
+
+const FREEZE_PRICE = 50;
+
+function openFreezeDialog() {
+  const dialog = $("freezeDialog");
+  if (!dialog) return;
+  $("freezeDialogCount").textContent = progress.freezes ?? 0;
+  $("freezeDialogCoins").textContent = progress.coins || 0;
+  const buyBtn = $("freezeBuyBtn");
+  buyBtn.disabled = (progress.coins || 0) < FREEZE_PRICE;
+  buyBtn.textContent = (progress.coins || 0) < FREEZE_PRICE ? "Not enough coins" : "Buy streak freeze";
+  dialog.showModal();
+}
+
+$("freezeDisplay")?.addEventListener("click", openFreezeDialog);
+
+$("freezeBuyBtn")?.addEventListener("click", () => {
+  if ((progress.coins || 0) < FREEZE_PRICE) return;
+  progress.coins -= FREEZE_PRICE;
+  progress.freezes = (progress.freezes ?? 0) + 1;
+  persistProgress();
+  $("coinDisplay").textContent = progress.coins;
+  renderFreezeCount();
+  // Update the dialog to reflect new state
+  $("freezeDialogCount").textContent = progress.freezes;
+  $("freezeDialogCoins").textContent = progress.coins;
+  const buyBtn = $("freezeBuyBtn");
+  buyBtn.disabled = (progress.coins || 0) < FREEZE_PRICE;
+  buyBtn.textContent = (progress.coins || 0) < FREEZE_PRICE ? "Not enough coins" : "Buy streak freeze";
+});
+
+$("freezeCloseBtn")?.addEventListener("click", () => $("freezeDialog")?.close());
+
 function renderTab(tab) {
   $("streakCount").textContent = currentStreak(progress);
   $("coinDisplay").textContent = progress.coins || 0;
+  renderFreezeCount();
   if (tab === "home") renderHome();
   else if (tab === "letters") renderLetters();
   else if (tab === "words") renderWords();
@@ -273,6 +316,8 @@ function mergeProgress(local, cloud) {
     signStats: mergeStats(local.signStats, cloud.signStats),
     streak: (local.lastDay || "") >= (cloud.lastDay || "") ? local.streak : cloud.streak,
     lastDay: (local.lastDay || "") >= (cloud.lastDay || "") ? local.lastDay : cloud.lastDay,
+    bestStreak: Math.max(local.bestStreak || 0, cloud.bestStreak || 0),
+    freezes: cloud.freezes != null ? Math.max(local.freezes ?? 2, cloud.freezes) : (local.freezes ?? 2),
   };
 }
 
@@ -589,12 +634,18 @@ function renderShop() {
     itemGrid.className = "shop-item-grid";
 
     items.forEach((item) => {
-      const owned = shop.owned.includes(item.id);
-      const equipped = shop.equipped.includes(item.id);
+      const owned = !item.consumable && shop.owned.includes(item.id);
+      const equipped = !item.consumable && shop.equipped.includes(item.id);
       const canAfford = (progress.coins || 0) >= item.price;
 
       let actionText, actionClass;
-      if (equipped) { actionText = "Unequip"; actionClass = "is-equipped"; }
+      if (item.consumable) {
+        const count = item.id === "streak-freeze" ? (progress.freezes ?? 0) : 0;
+        actionText = canAfford ? `Buy \u00B7 ${item.price}` : `${item.price}`;
+        actionClass = canAfford ? "" : "is-expensive";
+        // Show current count in description
+        item._desc = `${item.description} (You have ${count})`;
+      } else if (equipped) { actionText = "Unequip"; actionClass = "is-equipped"; }
       else if (owned) { actionText = "Equip"; actionClass = "is-owned"; }
       else if (canAfford) { actionText = `Buy \u00B7 ${item.price}`; actionClass = ""; }
       else { actionText = `${item.price}`; actionClass = "is-expensive"; }
@@ -602,7 +653,8 @@ function renderShop() {
       const btn = document.createElement("button");
       btn.className = `shop-item ${actionClass}`;
       btn.dataset.item = item.id;
-      btn.disabled = !owned && !canAfford;
+      btn.disabled = !item.consumable && !owned && !canAfford;
+      if (item.consumable && !canAfford) btn.disabled = true;
       btn.style.setProperty("--rarity-color", rarity.color);
       if (rarity.bg.startsWith("linear")) {
         btn.style.backgroundImage = rarity.bg;
@@ -613,8 +665,9 @@ function renderShop() {
         <span class="shop-rarity-dot" aria-label="${rarity.label}"></span>
         <span class="shop-emoji">${item.emoji}</span>
         <span class="shop-name">${item.name}</span>
-        <span class="shop-desc">${item.description}</span>
+        <span class="shop-desc">${item._desc || item.description}</span>
         <span class="shop-action">${actionText}</span>`;
+      delete item._desc;
       btn.addEventListener("click", () => handleShopClick(item.id));
       itemGrid.append(btn);
     });
@@ -627,6 +680,18 @@ function renderShop() {
 function handleShopClick(itemId) {
   const item = SHOP_ITEMS.find((i) => i.id === itemId);
   if (!item) return;
+
+  // Consumable items (streak freeze) are bought and applied immediately.
+  if (item.consumable) {
+    if ((progress.coins || 0) < item.price) return;
+    progress.coins -= item.price;
+    if (itemId === "streak-freeze") progress.freezes = (progress.freezes ?? 0) + 1;
+    persistProgress();
+    renderShop();
+    renderFreezeCount();
+    $("coinDisplay").textContent = progress.coins;
+    return;
+  }
 
   if (shop.owned.includes(itemId)) {
     if (shop.equipped.includes(itemId)) {
@@ -700,38 +765,29 @@ async function renderLeaderboard() {
   yd.setDate(yd.getDate() - 1);
   const yesterdayKey = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, "0")}-${String(yd.getDate()).padStart(2, "0")}`;
 
-  // Only show entries with an active streak (practiced today or yesterday).
-  const active = entries
+  // Show all accounts; streak resets to 0 if they haven't practiced today or yesterday.
+  const ranked = entries
     .map(e => ({
       ...e,
       activeStreak: (e.lastDay === todayKey || e.lastDay === yesterdayKey) ? e.streak : 0,
     }))
-    .filter(e => e.activeStreak > 0)
     .sort((a, b) => b.activeStreak - a.activeStreak);
 
-  if (!active.length) {
-    list.innerHTML = "";
-    note.textContent = "No active streaks right now. Practice today to get on the board!";
-    return;
-  }
-
-  list.innerHTML = active.map((entry, i) => {
+  list.innerHTML = ranked.map((entry, i) => {
     const isMe = entry.uid === user.uid;
     const medal = i === 0 ? "\uD83E\uDD47" : i === 1 ? "\uD83E\uDD48" : i === 2 ? "\uD83E\uDD49" : `${i + 1}`;
     const avatar = entry.photoURL
       ? `<img class="lb-avatar" src="${entry.photoURL}" alt="" referrerpolicy="no-referrer">`
       : `<span class="lb-avatar lb-avatar-placeholder"></span>`;
+    const best = entry.bestStreak || entry.streak || 0;
     return `<div class="lb-row${isMe ? " is-me" : ""}">
       <span class="lb-rank">${medal}</span>
       ${avatar}
       <span class="lb-name">${escapeHtml(entry.displayName)}${isMe ? " (you)" : ""}</span>
       <span class="lb-streak">\uD83D\uDD25 ${entry.activeStreak} day${entry.activeStreak === 1 ? "" : "s"}</span>
+      <span class="lb-best">Best: ${best}</span>
     </div>`;
   }).join("");
-
-  if (!active.some(e => e.uid === user.uid)) {
-    note.textContent = "Practice today to appear on the leaderboard!";
-  }
 }
 
 function escapeHtml(str) {
@@ -1109,6 +1165,7 @@ function success() {
   progress = bumpStreak(progress);
   persistProgress();
   $("streakCount").textContent = currentStreak(progress);
+  renderFreezeCount();
 }
 
 function advance() {
